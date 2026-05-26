@@ -47,6 +47,7 @@ class _SoumissionDetailScreenState extends State<SoumissionDetailScreen> {
         builder: (_) => SoumissionFormScreen(soumission: _soumission),
       ),
     ).then((_) {
+      if (!mounted) return;
       // Refresh after edit
       final provider = context.read<SoumissionProvider>();
       final updated = provider.soumissions

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_config.dart';
+import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/soumission_provider.dart';
 import '../../utils/validators.dart';
@@ -388,7 +389,7 @@ class _VerticalDivider extends StatelessWidget {
 }
 
 class _ProfileView extends StatelessWidget {
-  final dynamic user;
+  final User user;
   const _ProfileView({required this.user});
 
   @override

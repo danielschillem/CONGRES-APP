@@ -603,8 +603,8 @@ class _SoumissionFormScreenState extends State<SoumissionFormScreen> {
                 const SizedBox(height: 32),
 
                 // Submit button
-                Consumer<SoumissionProvider>(
-                  builder: (context, provider, _) {
+                Builder(
+                  builder: (context) {
                     return CustomButton(
                       label: _isEditMode
                           ? 'Enregistrer les modifications'
