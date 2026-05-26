@@ -137,7 +137,7 @@ func (h *AdminHandler) ApproveSoumission(c *gin.Context) {
 	soumission.Statut = statut
 	soumission.RaisonRejet = nil
 
-	if err := h.db.Save(&soumission).Error; err != nil {
+	if err := h.db.Model(&soumission).Select("Statut", "RaisonRejet").Updates(&soumission).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to approve soumission")
 		return
 	}
@@ -195,7 +195,7 @@ func (h *AdminHandler) RejectSoumission(c *gin.Context) {
 	soumission.Statut = statut
 	soumission.RaisonRejet = &raison
 
-	if err := h.db.Save(&soumission).Error; err != nil {
+	if err := h.db.Model(&soumission).Select("Statut", "RaisonRejet").Updates(&soumission).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to reject soumission")
 		return
 	}

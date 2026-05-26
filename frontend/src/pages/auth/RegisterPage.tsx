@@ -19,16 +19,16 @@ import { authApi } from '@/lib/api'
 
 const registerSchema = z
   .object({
-    civilite: z.string().min(1, 'La civilité est requise'),
-    nom: z.string().min(2, 'Le nom doit comporter au moins 2 caractères'),
-    prenom: z.string().min(2, 'Le prénom doit comporter au moins 2 caractères'),
-    sexe: z.string().min(1, 'Le sexe est requis'),
+    civilite: z.string({ required_error: 'La civilité est requise' }).min(1, 'La civilité est requise'),
+    nom: z.string({ required_error: 'Le nom est requis' }).min(2, 'Le nom doit comporter au moins 2 caractères'),
+    prenom: z.string({ required_error: 'Le prénom est requis' }).min(2, 'Le prénom doit comporter au moins 2 caractères'),
+    sexe: z.string({ required_error: 'Le sexe est requis' }).min(1, 'Le sexe est requis'),
     telephone: z
-      .string()
+      .string({ required_error: 'Le téléphone est requis' })
       .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 — 8 chiffres)'),
-    email: z.string().email('Adresse email invalide'),
-    password: z.string().min(8, 'Le mot de passe doit comporter au moins 8 caractères'),
-    password_confirmation: z.string().min(1, 'Veuillez confirmer votre mot de passe'),
+    email: z.string({ required_error: 'Adresse email invalide' }).email('Adresse email invalide'),
+    password: z.string({ required_error: 'Le mot de passe est requis' }).min(8, 'Le mot de passe doit comporter au moins 8 caractères'),
+    password_confirmation: z.string({ required_error: 'Veuillez confirmer votre mot de passe' }).min(1, 'Veuillez confirmer votre mot de passe'),
     organisme: z.string().optional(),
     profession: z.string().optional(),
     adresse: z.string().optional(),
@@ -54,6 +54,7 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { civilite: '', sexe: '' },
   })
 
   const onSubmit = async (data: RegisterFormData) => {
