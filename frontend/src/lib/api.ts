@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
-const API_BASE_URL = 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -115,22 +115,27 @@ export const authApi = {
   register: (data: Record<string, unknown>) =>
     api.post('/auth/register', data),
 
-  logout: () => api.post('/auth/logout'),
+  // JWT is stateless — logout is handled client-side only
+  logout: () => Promise.resolve(),
 
-  me: () => api.get('/auth/me'),
+  // Profile doubles as "me"
+  me: () => api.get('/profile'),
 
   refresh: (refresh_token: string) =>
     api.post('/auth/refresh', { refresh_token }),
 }
 
-// Soumissions endpoints
+// Soumissions endpoints (utilisateur authentifié)
 export const soumissionsApi = {
+  // Admin: liste paginée avec filtres
   getAll: (params?: Record<string, unknown>) =>
+    api.get('/admin/soumissions', { params }),
+
+  // Utilisateur: ses propres soumissions
+  getMy: (params?: Record<string, unknown>) =>
     api.get('/soumissions', { params }),
 
-  getMy: (params?: Record<string, unknown>) =>
-    api.get('/soumissions/my', { params }),
-
+  // Utilisateur — sa propre soumission
   getOne: (id: string) => api.get(`/soumissions/${id}`),
 
   create: (data: FormData) =>
@@ -139,41 +144,65 @@ export const soumissionsApi = {
     }),
 
   update: (id: string, data: FormData) =>
-    api.post(`/soumissions/${id}`, data, {
+    api.patch(`/soumissions/${id}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
-  approve: (id: string) => api.post(`/soumissions/${id}/approve`),
+  deleteMy: (id: string) => api.delete(`/soumissions/${id}`),
+
+  // Admin actions
+  getOneAdmin: (id: string) => api.get(`/admin/soumissions/${id}`),
+
+  approve: (id: string) => api.post(`/admin/soumissions/${id}/approve`),
 
   reject: (id: string, raison: string) =>
-    api.post(`/soumissions/${id}/reject`, { raison_rejet: raison }),
+    api.post(`/admin/soumissions/${id}/reject`, { raison }),
 
-  delete: (id: string) => api.delete(`/soumissions/${id}`),
+  delete: (id: string) => api.delete(`/admin/soumissions/${id}`),
 
   download: (id: string) =>
-    api.get(`/soumissions/${id}/download`, { responseType: 'blob' }),
+    api.get(`/admin/soumissions/${id}/download`, { responseType: 'blob' }),
 }
 
 // Notifications endpoints
 export const notificationsApi = {
   getAll: () => api.get('/notifications'),
 
-  markAsRead: (id: string) => api.post(`/notifications/${id}/read`),
+  markAsRead: (id: string) => api.patch(`/notifications/${id}/read`),
 
   markAllAsRead: () => api.post('/notifications/read-all'),
 
   getUnreadCount: () => api.get('/notifications/unread-count'),
 }
 
-// User endpoints
+// Profile / compte utilisateur
+export const profileApi = {
+  get: () => api.get('/profile'),
+
+  update: (data: Record<string, unknown>) =>
+    api.patch('/profile', data),
+
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    api.patch('/profile/password', data),
+
+  deleteAccount: () => api.delete('/profile'),
+}
+
+// Ancien alias (compatibilité avec les pages existantes qui importent usersApi)
 export const usersApi = {
   updateProfile: (data: Record<string, unknown>) =>
-    api.put('/user/profile', data),
+    api.patch('/profile', data),
 
   changePassword: (data: Record<string, unknown>) =>
-    api.put('/user/password', data),
+    api.patch('/profile/password', data),
 
-  deleteAccount: () => api.delete('/user/account'),
+  deleteAccount: () => api.delete('/profile'),
+}
+
+// Admin endpoints
+export const adminApi = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: () => api.get('/admin/users'),
 }
 
 // Inscriptions endpoints

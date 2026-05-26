@@ -1,0 +1,61 @@
+services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: congres_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Backend Go ────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: congres_app
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-32chars}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-in-production-refresh}
+      PORT: 8080
+      UPLOAD_PATH: /app/uploads/soumissions
+      ORANGE_MONEY_TEST_URL: ${ORANGE_MONEY_TEST_URL:-}
+      ORANGE_MONEY_PROD_URL: ${ORANGE_MONEY_PROD_URL:-}
+      ORANGE_MONEY_MERCHANT_MSISDN: ${ORANGE_MONEY_MERCHANT_MSISDN:-}
+      ORANGE_MONEY_API_USERNAME: ${ORANGE_MONEY_API_USERNAME:-}
+      ORANGE_MONEY_API_PASSWORD: ${ORANGE_MONEY_API_PASSWORD:-}
+    volumes:
+      - uploads:/app/uploads
+
+  # ── Frontend React / Nginx ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+
+volumes:
+  pg_data:
+  uploads:

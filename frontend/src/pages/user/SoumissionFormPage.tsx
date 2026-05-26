@@ -166,9 +166,8 @@ export function SoumissionFormPage() {
     formData.append('document_title', data.document_title)
     formData.append('author_name', data.author_name)
     formData.append('resume', data.resume)
-    keywords.forEach((kw, i) => formData.append(`keywords[${i}]`, kw))
+    formData.append('keywords', JSON.stringify(keywords))
     if (file) formData.append('file', file)
-    if (editId) formData.append('_method', 'PUT')
 
     if (editId) {
       updateMutation.mutate({ id: editId, formData })

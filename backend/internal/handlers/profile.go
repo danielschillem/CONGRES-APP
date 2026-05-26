@@ -12,6 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=6"`
+}
+
 type ProfileHandler struct {
 	db *gorm.DB
 }
@@ -123,6 +128,46 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	}
 
 	utils.RespondSuccess(c, http.StatusOK, user)
+}
+
+func (h *ProfileHandler) ChangePassword(c *gin.Context) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var user models.User
+	if err := h.db.First(&user, "id = ?", userID).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "User not found")
+		return
+	}
+
+	if !utils.CheckPasswordHash(req.CurrentPassword, user.Password) {
+		utils.RespondError(c, http.StatusUnauthorized, "Current password is incorrect")
+		return
+	}
+
+	hashed, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to hash password")
+		return
+	}
+
+	user.Password = hashed
+	if err := h.db.Save(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to update password")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {

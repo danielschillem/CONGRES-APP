@@ -15,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import { soumissionsApi } from '@/lib/api'
+import { soumissionsApi, adminApi } from '@/lib/api'
 import { Soumission } from '@/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -111,12 +111,11 @@ export function AdminDashboardPage() {
     },
   })
 
-  // Stats query (no filters)
   const { data: statsData } = useQuery({
-    queryKey: ['admin-soumissions-stats'],
+    queryKey: ['admin-stats'],
     queryFn: async () => {
-      const response = await soumissionsApi.getAll({ limit: 9999 })
-      return response.data
+      const response = await adminApi.getStats()
+      return response.data.data
     },
   })
 
@@ -124,7 +123,7 @@ export function AdminDashboardPage() {
     mutationFn: (id: string) => soumissionsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-soumissions'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-soumissions-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
       setDeleteId(null)
     },
   })
@@ -156,15 +155,14 @@ export function AdminDashboardPage() {
   const total: number = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-  const allSoumissions: Soumission[] = statsData?.data ?? []
   const stats = {
-    total: statsData?.total ?? allSoumissions.length,
-    abstracts: allSoumissions.filter((s) => s.submission_type === 'Abstract').length,
-    posters: allSoumissions.filter((s) => s.submission_type === 'Poster').length,
-    communications: allSoumissions.filter((s) => s.submission_type === 'Communication').length,
-    enAttente: allSoumissions.filter((s) => s.statut === 'En attente').length,
-    approuvees: allSoumissions.filter((s) => s.statut === 'Approuvée').length,
-    rejetees: allSoumissions.filter((s) => s.statut === 'Rejetée').length,
+    total: statsData?.total ?? 0,
+    abstracts: statsData?.total_articles ?? 0,
+    posters: statsData?.total_posters ?? 0,
+    communications: statsData?.total_communications ?? 0,
+    enAttente: statsData?.en_attente ?? 0,
+    approuvees: statsData?.approuvees ?? 0,
+    rejetees: statsData?.rejetees ?? 0,
   }
 
   return (

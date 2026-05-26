@@ -337,6 +337,38 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
+func (h *SoumissionHandler) DeleteSoumission(c *gin.Context) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid soumission ID")
+		return
+	}
+
+	var soumission models.Soumission
+	if err := h.db.Where("id = ? AND user_id = ?", id, userID).First(&soumission).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Soumission not found")
+		return
+	}
+
+	if soumission.FilePath != "" {
+		os.Remove(soumission.FilePath)
+	}
+
+	if err := h.db.Delete(&soumission).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to delete soumission")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Soumission deleted successfully"})
+}
+
 // sanitizeFilename removes unsafe characters from filenames.
 func sanitizeFilename(name string) string {
 	var sb strings.Builder

@@ -69,6 +69,25 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, notif)
 }
 
+func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	now := time.Now()
+	if err := h.db.Model(&models.Notification{}).
+		Where("notifiable_id = ? AND read_at IS NULL", userID).
+		Update("read_at", now).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to mark all notifications as read")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "All notifications marked as read"})
+}
+
 func (h *NotificationHandler) GetUnreadCount(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))

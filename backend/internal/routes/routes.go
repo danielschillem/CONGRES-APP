@@ -40,6 +40,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		{
 			profile.GET("", profileHandler.GetProfile)
 			profile.PATCH("", profileHandler.UpdateProfile)
+			profile.PATCH("/password", profileHandler.ChangePassword)
 			profile.DELETE("", profileHandler.DeleteProfile)
 		}
 
@@ -50,6 +51,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 			soumissions.POST("", soumissionHandler.CreateSoumission)
 			soumissions.GET("/:id", soumissionHandler.GetSoumission)
 			soumissions.PATCH("/:id", soumissionHandler.UpdateSoumission)
+			soumissions.DELETE("/:id", soumissionHandler.DeleteSoumission)
 		}
 
 		// Notifications
@@ -58,6 +60,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 			notifications.GET("", notificationHandler.ListNotifications)
 			notifications.GET("/unread-count", notificationHandler.GetUnreadCount)
 			notifications.PATCH("/:id/read", notificationHandler.MarkAsRead)
+			notifications.POST("/read-all", notificationHandler.MarkAllAsRead)
 		}
 
 		// Inscriptions

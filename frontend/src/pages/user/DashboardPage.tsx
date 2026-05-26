@@ -85,7 +85,7 @@ export function DashboardPage() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => soumissionsApi.delete(id),
+    mutationFn: (id: string) => soumissionsApi.deleteMy(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-soumissions'] })
       setDeleteId(null)

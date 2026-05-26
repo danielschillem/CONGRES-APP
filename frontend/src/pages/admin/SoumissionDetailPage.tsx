@@ -66,7 +66,7 @@ export function SoumissionDetailPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['soumission-admin', id],
     queryFn: async () => {
-      const response = await soumissionsApi.getOne(id!)
+      const response = await soumissionsApi.getOneAdmin(id!)
       return response.data.data as Soumission
     },
     enabled: Boolean(id),
@@ -77,7 +77,7 @@ export function SoumissionDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['soumission-admin', id] })
       queryClient.invalidateQueries({ queryKey: ['admin-soumissions'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-soumissions-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
       setApproveDialogOpen(false)
     },
   })
@@ -87,7 +87,7 @@ export function SoumissionDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['soumission-admin', id] })
       queryClient.invalidateQueries({ queryKey: ['admin-soumissions'] })
-      queryClient.invalidateQueries({ queryKey: ['admin-soumissions-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
       setRejectDialogOpen(false)
       setRaisonRejet('')
     },
