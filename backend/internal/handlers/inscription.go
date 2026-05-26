@@ -1,0 +1,109 @@
+package handlers
+
+import (
+	"fmt"
+	"math/rand"
+	"net/http"
+	"time"
+
+	"congres-app/backend/internal/config"
+	"congres-app/backend/internal/models"
+	"congres-app/backend/internal/services"
+	"congres-app/backend/pkg/utils"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+)
+
+type InscriptionHandler struct {
+	db             *gorm.DB
+	cfg            *config.Config
+	orangeMoneyService *services.OrangeMoneyService
+}
+
+func NewInscriptionHandler(db *gorm.DB, cfg *config.Config) *InscriptionHandler {
+	return &InscriptionHandler{
+		db:             db,
+		cfg:            cfg,
+		orangeMoneyService: services.NewOrangeMoneyService(cfg),
+	}
+}
+
+type CreateInscriptionRequest struct {
+	Nom               string  `json:"nom" binding:"required"`
+	Prenom            string  `json:"prenom" binding:"required"`
+	Email             string  `json:"email" binding:"required,email"`
+	Telephone         string  `json:"telephone" binding:"required"`
+	Organisme         string  `json:"organisme" binding:"required"`
+	Pays              string  `json:"pays" binding:"required"`
+	ParticipationType string  `json:"participation_type" binding:"required"`
+	Montant           float64 `json:"montant" binding:"required,gt=0"`
+	MethodePaiement   string  `json:"methode_paiement" binding:"required"`
+}
+
+func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
+	var req CreateInscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Generate OTP code (6 digits)
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	codeOTP := fmt.Sprintf("%06d", rng.Intn(1000000))
+
+	// Generate unique invoice number
+	numeroFacture := generateInvoiceNumber()
+
+	// Process payment via Orange Money if configured and method is orange_money
+	if req.MethodePaiement == "orange_money" {
+		paymentReq := services.OrangeMoneyPaymentRequest{
+			Amount:        req.Montant,
+			CustomerPhone: req.Telephone,
+			OrderID:       numeroFacture,
+			Description:   fmt.Sprintf("Inscription au congrès - %s %s", req.Prenom, req.Nom),
+		}
+
+		resp, err := h.orangeMoneyService.InitiatePayment(paymentReq)
+		if err != nil {
+			utils.RespondError(c, http.StatusBadGateway, "Payment initiation failed: "+err.Error())
+			return
+		}
+
+		if !resp.Success {
+			utils.RespondError(c, http.StatusPaymentRequired, "Payment failed: "+resp.Message)
+			return
+		}
+	}
+
+	inscription := models.Inscription{
+		Nom:               req.Nom,
+		Prenom:            req.Prenom,
+		Email:             req.Email,
+		Telephone:         req.Telephone,
+		Organisme:         req.Organisme,
+		Pays:              req.Pays,
+		ParticipationType: req.ParticipationType,
+		Montant:           req.Montant,
+		MethodePaiement:   req.MethodePaiement,
+		CodeOTP:           codeOTP,
+		NumeroFacture:     numeroFacture,
+	}
+
+	if err := h.db.Create(&inscription).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to create inscription")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusCreated, inscription)
+}
+
+// generateInvoiceNumber creates a unique invoice number with timestamp and random suffix.
+func generateInvoiceNumber() string {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	now := time.Now()
+	return fmt.Sprintf("FACT-%d%02d%02d-%05d",
+		now.Year(), now.Month(), now.Day(),
+		rng.Intn(99999),
+	)
+}
