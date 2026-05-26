@@ -9,9 +9,12 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 
 import { DashboardPage } from '@/pages/user/DashboardPage'
 import { SoumissionFormPage } from '@/pages/user/SoumissionFormPage'
+import { SoumissionViewPage } from '@/pages/user/SoumissionViewPage'
 import { ProfilePage } from '@/pages/user/ProfilePage'
 
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
+import { AdminInscriptionsPage } from '@/pages/admin/AdminInscriptionsPage'
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { SoumissionDetailPage } from '@/pages/admin/SoumissionDetailPage'
 import { AdminProfilePage } from '@/pages/admin/AdminProfilePage'
 
@@ -40,8 +43,8 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/soumission/nouveau" element={<SoumissionFormPage />} />
-              <Route path="/soumission/:id" element={<SoumissionFormPage />} />
               <Route path="/soumission/:id/modifier" element={<SoumissionFormPage />} />
+              <Route path="/soumission/:id" element={<SoumissionViewPage />} />
               <Route path="/inscription" element={<InscriptionPage />} />
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
@@ -53,6 +56,8 @@ function App() {
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/soumissions" element={<AdminDashboardPage />} />
               <Route path="/admin/soumissions/:id" element={<SoumissionDetailPage />} />
+              <Route path="/admin/inscriptions" element={<AdminInscriptionsPage />} />
+              <Route path="/admin/utilisateurs" element={<AdminUsersPage />} />
               <Route path="/admin/profile" element={<AdminProfilePage />} />
             </Route>
           </Route>

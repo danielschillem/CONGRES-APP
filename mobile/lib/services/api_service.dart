@@ -71,7 +71,12 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
+        final raw = jsonDecode(response.body);
+        // Unwrap { success: true, data: { ... } }
+        final body = (raw is Map && raw['success'] == true && raw['data'] != null)
+            ? raw['data'] as Map<String, dynamic>
+            : raw as Map<String, dynamic>;
+
         final newAccessToken = body['access_token']?.toString() ??
             body['accessToken']?.toString() ??
             body['token']?.toString();
@@ -306,7 +311,12 @@ class ApiService {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return null;
       try {
-        return jsonDecode(response.body);
+        final decoded = jsonDecode(response.body);
+        // Unwrap the standard { success: true, data: ... } wrapper
+        if (decoded is Map && decoded['success'] == true && decoded.containsKey('data')) {
+          return decoded['data'];
+        }
+        return decoded;
       } catch (_) {
         return response.body;
       }

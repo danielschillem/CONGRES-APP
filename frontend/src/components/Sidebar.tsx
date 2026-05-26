@@ -73,6 +73,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       icon: <ClipboardList className="h-4 w-4" />,
     },
     {
+      label: 'Inscriptions',
+      href: '/admin/inscriptions',
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
       label: 'En attente',
       href: '/admin/soumissions?statut=En+attente',
       icon: <Clock className="h-4 w-4" />,
@@ -86,6 +91,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       label: 'Rejetées',
       href: '/admin/soumissions?statut=Rejet%C3%A9e',
       icon: <XCircle className="h-4 w-4" />,
+    },
+    {
+      label: 'Utilisateurs',
+      href: '/admin/utilisateurs',
+      icon: <Users className="h-4 w-4" />,
     },
     {
       label: 'Mon profil',

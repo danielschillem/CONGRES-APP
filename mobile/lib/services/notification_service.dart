@@ -34,9 +34,10 @@ class NotificationService {
 
   // Mark all notifications as read
   static Future<void> markAllAsRead() async {
-    await ApiService.patch(
+    await ApiService.post(
       '${AppConfig.notificationsEndpoint}/read-all',
       {},
+      withAuth: true,
     );
   }
 

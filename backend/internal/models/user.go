@@ -19,7 +19,8 @@ type User struct {
 	Biographie *string   `json:"biographie"`
 	Email      string    `json:"email" gorm:"uniqueIndex;not null"`
 	Password   string    `json:"-" gorm:"not null"`
-	Role       string    `json:"role" gorm:"default:'user';not null"`
+	Role       string `json:"role" gorm:"default:'user';not null"`
+	Active     bool   `json:"active" gorm:"default:true"`
 
 	Soumissions   []Soumission   `json:"soumissions,omitempty" gorm:"foreignKey:UserID"`
 	Notifications []Notification `json:"notifications,omitempty" gorm:"foreignKey:NotifiableID"`

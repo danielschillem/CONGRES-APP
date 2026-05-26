@@ -1,9 +1,15 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Inscription struct {
 	ID                uint      `json:"id" gorm:"primaryKey;autoIncrement"`
+	UserID            uuid.UUID `json:"user_id" gorm:"type:uuid;not null;index"`
+	User              User      `json:"-" gorm:"foreignKey:UserID"`
 	Nom               string    `json:"nom" gorm:"not null"`
 	Prenom            string    `json:"prenom" gorm:"not null"`
 	Email             string    `json:"email" gorm:"not null"`
@@ -13,8 +19,10 @@ type Inscription struct {
 	ParticipationType string    `json:"participation_type" gorm:"not null"`
 	Montant           float64   `json:"montant" gorm:"not null"`
 	MethodePaiement   string    `json:"methode_paiement" gorm:"not null"`
-	CodeOTP           string    `json:"code_otp"`
+
 	NumeroFacture     string    `json:"numero_facture" gorm:"uniqueIndex;not null"`
+	TransactionID     string    `json:"transaction_id" gorm:""`
+	PaymentStatus     string    `json:"payment_status" gorm:"default:pending"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"congres-app/backend/internal/config"
 	"congres-app/backend/internal/models"
@@ -50,6 +51,16 @@ type AuthResponse struct {
 	User         models.User `json:"user"`
 }
 
+func (h *AuthHandler) persistRefreshToken(tokenString string, userID uuid.UUID) error {
+	rt := models.RefreshToken{
+		ID:        uuid.New(),
+		UserID:    userID,
+		Token:     tokenString,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+	}
+	return h.db.Create(&rt).Error
+}
+
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -57,14 +68,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// Check email uniqueness
 	var existing models.User
 	if err := h.db.Where("email = ?", req.Email).First(&existing).Error; err == nil {
 		utils.RespondError(c, http.StatusConflict, "Email already registered")
 		return
 	}
 
-	// Check telephone uniqueness
 	if err := h.db.Where("telephone = ?", req.Telephone).First(&existing).Error; err == nil {
 		utils.RespondError(c, http.StatusConflict, "Telephone already registered")
 		return
@@ -109,6 +118,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	if err := h.persistRefreshToken(refreshToken, user.ID); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to persist refresh token")
+		return
+	}
+
 	utils.RespondSuccess(c, http.StatusCreated, AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -146,6 +160,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	if err := h.persistRefreshToken(refreshToken, user.ID); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to persist refresh token")
+		return
+	}
+
 	utils.RespondSuccess(c, http.StatusOK, AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -160,9 +179,20 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	claims, err := utils.ValidateRefreshToken(req.RefreshToken, h.cfg.JWTRefreshSecret)
+	claims, err := utils.ValidateToken(req.RefreshToken, h.cfg.JWTRefreshSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusUnauthorized, "Invalid or expired refresh token")
+		return
+	}
+
+	if claims.Type != "refresh" {
+		utils.RespondError(c, http.StatusUnauthorized, "Token is not a refresh token")
+		return
+	}
+
+	var stored models.RefreshToken
+	if err := h.db.Where("token = ? AND revoked_at IS NULL", req.RefreshToken).First(&stored).Error; err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Refresh token not found or already revoked")
 		return
 	}
 
@@ -172,17 +202,26 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	// Verify user still exists
 	var user models.User
 	if err := h.db.First(&user, "id = ?", userID).Error; err != nil {
 		utils.RespondError(c, http.StatusUnauthorized, "User not found")
 		return
 	}
 
-	// Rotate refresh token (revoke old, issue new)
-	newRefreshToken, err := utils.RotateRefreshToken(req.RefreshToken, user.ID, user.Role, user.Email, h.cfg.JWTRefreshSecret)
+	now := time.Now()
+	if err := h.db.Model(&stored).Update("revoked_at", &now).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to revoke old refresh token")
+		return
+	}
+
+	newRefreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, h.cfg.JWTRefreshSecret)
 	if err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "Failed to rotate refresh token")
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate refresh token")
+		return
+	}
+
+	if err := h.persistRefreshToken(newRefreshToken, user.ID); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to persist new refresh token")
 		return
 	}
 

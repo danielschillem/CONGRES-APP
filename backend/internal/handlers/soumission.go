@@ -12,6 +12,7 @@ import (
 	"congres-app/backend/internal/config"
 	"congres-app/backend/internal/middleware"
 	"congres-app/backend/internal/models"
+	"congres-app/backend/internal/services"
 	"congres-app/backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -22,12 +23,13 @@ import (
 )
 
 type SoumissionHandler struct {
-	db  *gorm.DB
-	cfg *config.Config
+	db   *gorm.DB
+	cfg  *config.Config
+	mail *services.MailService
 }
 
-func NewSoumissionHandler(db *gorm.DB, cfg *config.Config) *SoumissionHandler {
-	return &SoumissionHandler{db: db, cfg: cfg}
+func NewSoumissionHandler(db *gorm.DB, cfg *config.Config, mail *services.MailService) *SoumissionHandler {
+	return &SoumissionHandler{db: db, cfg: cfg, mail: mail}
 }
 
 // createAdminNotification creates a notification for all admin users about a soumission event.
@@ -133,6 +135,13 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 		return
 	}
 
+	// Validate file size (max 50MB)
+	const maxFileSize int64 = 50 << 20 // 50MB
+	if file.Size > maxFileSize {
+		utils.RespondError(c, http.StatusBadRequest, "File size exceeds 50MB limit")
+		return
+	}
+
 	// Validate file extension
 	if !strings.HasSuffix(strings.ToLower(file.Filename), ".pdf") {
 		utils.RespondError(c, http.StatusBadRequest, "Only PDF files are accepted")
@@ -201,6 +210,21 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 		&soumission,
 		fmt.Sprintf("Nouvelle soumission: %s par %s", soumission.DocumentTitle, soumission.AuthorName),
 	)
+
+	go func() {
+		var admins []models.User
+		if err := h.db.Where("role = ?", "admin").Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				if admin.Email != "" {
+					h.mail.NouvelleSoumissionAdmin(
+						admin.Email, admin.Prenom, admin.Nom,
+						soumission.DocumentTitle, soumission.AuthorName,
+						h.cfg.AppBaseURL+"/admin/soumissions/"+soumission.ID.String(),
+					)
+				}
+			}
+		}
+	}()
 
 	utils.RespondSuccess(c, http.StatusCreated, soumission)
 }
@@ -294,6 +318,12 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 	// Handle optional new file upload
 	file, err := c.FormFile("file")
 	if err == nil {
+		const maxFileSize int64 = 50 << 20 // 50MB
+		if file.Size > maxFileSize {
+			utils.RespondError(c, http.StatusBadRequest, "File size exceeds 50MB limit")
+			return
+		}
+
 		if !strings.HasSuffix(strings.ToLower(file.Filename), ".pdf") {
 			utils.RespondError(c, http.StatusBadRequest, "Only PDF files are accepted")
 			return
@@ -333,6 +363,21 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 		&soumission,
 		fmt.Sprintf("Soumission mise à jour: %s par %s", soumission.DocumentTitle, soumission.AuthorName),
 	)
+
+	go func() {
+		var admins []models.User
+		if err := h.db.Where("role = ?", "admin").Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				if admin.Email != "" {
+					h.mail.SoumissionModifieeAdmin(
+						admin.Email, admin.Prenom, admin.Nom,
+						soumission.DocumentTitle, soumission.AuthorName,
+						h.cfg.AppBaseURL+"/admin/soumissions/"+soumission.ID.String(),
+					)
+				}
+			}
+		}
+	}()
 
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }

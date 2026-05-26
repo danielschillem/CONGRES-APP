@@ -6,7 +6,9 @@ import (
 	"os"
 	"strconv"
 
+	"congres-app/backend/internal/config"
 	"congres-app/backend/internal/models"
+	"congres-app/backend/internal/services"
 	"congres-app/backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -15,11 +17,13 @@ import (
 )
 
 type AdminHandler struct {
-	db *gorm.DB
+	db   *gorm.DB
+	mail *services.MailService
+	cfg  *config.Config
 }
 
-func NewAdminHandler(db *gorm.DB) *AdminHandler {
-	return &AdminHandler{db: db}
+func NewAdminHandler(db *gorm.DB, mail *services.MailService, cfg *config.Config) *AdminHandler {
+	return &AdminHandler{db: db, mail: mail, cfg: cfg}
 }
 
 type RejectRequest struct {
@@ -147,6 +151,23 @@ func (h *AdminHandler) ApproveSoumission(c *gin.Context) {
 		fmt.Sprintf("Votre soumission \"%s\" a été approuvée.", soumission.DocumentTitle),
 	)
 
+	go func() {
+		user := soumission.User
+		if user.Email == "" {
+			var u models.User
+			if err := h.db.First(&u, "id = ?", soumission.UserID).Error; err == nil {
+				user = u
+			}
+		}
+		if user.Email != "" {
+			h.mail.SoumissionApprouvee(
+				user.Email, user.Prenom, user.Nom,
+				soumission.DocumentTitle,
+				h.cfg.AppBaseURL+"/soumission/"+soumission.ID.String(),
+			)
+		}
+	}()
+
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
@@ -188,6 +209,23 @@ func (h *AdminHandler) RejectSoumission(c *gin.Context) {
 		fmt.Sprintf("Votre soumission \"%s\" a été rejetée. Raison: %s", soumission.DocumentTitle, req.Raison),
 	)
 
+	go func() {
+		user := soumission.User
+		if user.Email == "" {
+			var u models.User
+			if err := h.db.First(&u, "id = ?", soumission.UserID).Error; err == nil {
+				user = u
+			}
+		}
+		if user.Email != "" {
+			h.mail.SoumissionRejetee(
+				user.Email, user.Prenom, user.Nom,
+				soumission.DocumentTitle, req.Raison,
+				h.cfg.AppBaseURL+"/soumission/"+soumission.ID.String(),
+			)
+		}
+	}()
+
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
@@ -225,6 +263,12 @@ type StatsResponse struct {
 	EnAttente           int64 `json:"en_attente"`
 	Approuvees          int64 `json:"approuvees"`
 	Rejetees            int64 `json:"rejetees"`
+	TotalInscriptions   int64 `json:"total_inscriptions"`
+	InscriptionsPresentiel int64 `json:"inscriptions_presentiel"`
+	InscriptionsEnLigne    int64 `json:"inscriptions_en_ligne"`
+	InscriptionsVirtuel    int64 `json:"inscriptions_virtuel"`
+	InscriptionsConfirmees int64 `json:"inscriptions_confirmees"`
+	InscriptionsEnAttente  int64 `json:"inscriptions_en_attente"`
 }
 
 func (h *AdminHandler) GetStats(c *gin.Context) {
@@ -238,15 +282,123 @@ func (h *AdminHandler) GetStats(c *gin.Context) {
 	h.db.Model(&models.Soumission{}).Where("statut = ?", "Approuvée").Count(&stats.Approuvees)
 	h.db.Model(&models.Soumission{}).Where("statut = ?", "Rejetée").Count(&stats.Rejetees)
 
+	h.db.Model(&models.Inscription{}).Count(&stats.TotalInscriptions)
+	h.db.Model(&models.Inscription{}).Where("participation_type = ?", "Présentiel").Count(&stats.InscriptionsPresentiel)
+	h.db.Model(&models.Inscription{}).Where("participation_type = ?", "En ligne").Count(&stats.InscriptionsEnLigne)
+	h.db.Model(&models.Inscription{}).Where("participation_type = ?", "Virtuel").Count(&stats.InscriptionsVirtuel)
+	h.db.Model(&models.Inscription{}).Where("payment_status = ?", "confirmed").Count(&stats.InscriptionsConfirmees)
+	h.db.Model(&models.Inscription{}).Where("payment_status = ?", "pending").Count(&stats.InscriptionsEnAttente)
+
 	utils.RespondSuccess(c, http.StatusOK, stats)
 }
 
+func (h *AdminHandler) ListInscriptions(c *gin.Context) {
+	participationType := c.Query("participation_type")
+	pays := c.Query("pays")
+	paymentStatus := c.Query("payment_status")
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	query := h.db.Model(&models.Inscription{}).Order("created_at desc")
+
+	if participationType != "" {
+		query = query.Where("participation_type = ?", participationType)
+	}
+	if pays != "" {
+		query = query.Where("pays = ?", pays)
+	}
+	if paymentStatus != "" {
+		query = query.Where("payment_status = ?", paymentStatus)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to count inscriptions")
+		return
+	}
+
+	var inscriptions []models.Inscription
+	if err := query.Offset(offset).Limit(limit).Find(&inscriptions).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to fetch inscriptions")
+		return
+	}
+
+	utils.RespondPaginated(c, inscriptions, total, page, limit)
+}
+
 func (h *AdminHandler) ListUsers(c *gin.Context) {
+	search := c.Query("search")
+
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	query := h.db.Model(&models.User{}).Order("created_at desc")
+
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where(
+			"nom ILIKE ? OR prenom ILIKE ? OR email ILIKE ? OR telephone ILIKE ?",
+			like, like, like, like,
+		)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to count users")
+		return
+	}
+
 	var users []models.User
-	if err := h.db.Order("created_at desc").Find(&users).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Find(&users).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to fetch users")
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, users)
+	utils.RespondPaginated(c, users, total, page, limit)
+}
+
+func (h *AdminHandler) DeactivateUser(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	var user models.User
+	if err := h.db.First(&user, "id = ?", id).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "User not found")
+		return
+	}
+
+	if user.Role == "admin" {
+		utils.RespondError(c, http.StatusForbidden, "Cannot deactivate an admin account")
+		return
+	}
+
+	user.Active = !user.Active
+	if err := h.db.Save(&user).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to update user")
+		return
+	}
+
+	status := "activé"
+	if !user.Active {
+		status = "désactivé"
+	}
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Compte " + status + " avec succès", "user": user})
 }

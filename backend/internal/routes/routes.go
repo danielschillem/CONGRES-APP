@@ -1,9 +1,12 @@
 package routes
 
 import (
+	"time"
+
 	"congres-app/backend/internal/config"
 	"congres-app/backend/internal/handlers"
 	"congres-app/backend/internal/middleware"
+	"congres-app/backend/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -13,23 +16,31 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	// Apply CORS middleware globally
 	router.Use(middleware.CORS())
 
+	// Initialize services
+	mailService := services.NewMailService(cfg)
+
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db, cfg)
 	profileHandler := handlers.NewProfileHandler(db)
-	soumissionHandler := handlers.NewSoumissionHandler(db, cfg)
-	adminHandler := handlers.NewAdminHandler(db)
+	soumissionHandler := handlers.NewSoumissionHandler(db, cfg, mailService)
+	adminHandler := handlers.NewAdminHandler(db, mailService, cfg)
 	notificationHandler := handlers.NewNotificationHandler(db)
-	inscriptionHandler := handlers.NewInscriptionHandler(db, cfg)
+	inscriptionHandler := handlers.NewInscriptionHandler(db, cfg, mailService)
+	webhookHandler := handlers.NewWebhookHandler(db, cfg, mailService)
 
 	api := router.Group("/api")
 
-	// ─── Auth routes (public) ──────────────────────────────────────────
+	// ─── Auth routes (public, rate-limited) ────────────────────────────
 	auth := api.Group("/auth")
+	auth.Use(middleware.RateLimit(10, 1*time.Minute))
 	{
 		auth.POST("/register", authHandler.Register)
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/refresh", authHandler.Refresh)
 	}
+
+	// ─── Webhooks (public) ──────────────────────────────────────────────
+	api.POST("/webhooks/orange-money", webhookHandler.HandleOrangeMoneyNotification)
 
 	// ─── Protected routes ──────────────────────────────────────────────
 	protected := api.Group("")
@@ -84,9 +95,13 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				adminSoumissions.DELETE("/:id", adminHandler.DeleteSoumission)
 			}
 
+			// Inscriptions management
+			admin.GET("/inscriptions", adminHandler.ListInscriptions)
+
 			// Stats and users
 			admin.GET("/stats", adminHandler.GetStats)
 			admin.GET("/users", adminHandler.ListUsers)
+			admin.PATCH("/users/:id/deactivate", adminHandler.DeactivateUser)
 		}
 	}
 }

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,12 +15,6 @@ type Claims struct {
 	Type   string `json:"type"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
-
-// In-memory refresh token store (maps token string -> userID)
-var (
-	refreshTokenStore = make(map[string]uuid.UUID)
-	refreshTokenMu    sync.RWMutex
-)
 
 func GenerateAccessToken(userID uuid.UUID, role, email, jwtSecret string) (string, error) {
 	claims := Claims{
@@ -52,17 +45,7 @@ func GenerateRefreshToken(userID uuid.UUID, role, email, refreshSecret string) (
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, err := token.SignedString([]byte(refreshSecret))
-	if err != nil {
-		return "", err
-	}
-
-	// Store refresh token
-	refreshTokenMu.Lock()
-	refreshTokenStore[signed] = userID
-	refreshTokenMu.Unlock()
-
-	return signed, nil
+	return token.SignedString([]byte(refreshSecret))
 }
 
 func ValidateToken(tokenString, secret string) (*Claims, error) {
@@ -82,39 +65,4 @@ func ValidateToken(tokenString, secret string) (*Claims, error) {
 	}
 
 	return claims, nil
-}
-
-func ValidateRefreshToken(tokenString, refreshSecret string) (*Claims, error) {
-	claims, err := ValidateToken(tokenString, refreshSecret)
-	if err != nil {
-		return nil, err
-	}
-
-	if claims.Type != "refresh" {
-		return nil, errors.New("token is not a refresh token")
-	}
-
-	// Check if the token is in our store
-	refreshTokenMu.RLock()
-	_, exists := refreshTokenStore[tokenString]
-	refreshTokenMu.RUnlock()
-
-	if !exists {
-		return nil, errors.New("refresh token not found or already revoked")
-	}
-
-	return claims, nil
-}
-
-func RevokeRefreshToken(tokenString string) {
-	refreshTokenMu.Lock()
-	delete(refreshTokenStore, tokenString)
-	refreshTokenMu.Unlock()
-}
-
-func RotateRefreshToken(oldToken string, userID uuid.UUID, role, email, refreshSecret string) (string, error) {
-	// Revoke old token
-	RevokeRefreshToken(oldToken)
-	// Issue new one
-	return GenerateRefreshToken(userID, role, email, refreshSecret)
 }

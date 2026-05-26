@@ -11,6 +11,7 @@ export interface User {
   biographie?: string;
   email: string;
   role: 'user' | 'admin';
+  active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -105,6 +106,25 @@ export interface InscriptionRequest {
   code_otp: string;
 }
 
+export interface Inscription {
+  id: number;
+  user_id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  organisme?: string;
+  pays: string;
+  participation_type: 'Présentiel' | 'En ligne' | 'Virtuel';
+  montant: number;
+  methode_paiement: string;
+  numero_facture: string;
+  transaction_id?: string;
+  payment_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SoumissionStats {
   total: number;
   abstracts: number;
@@ -113,4 +133,10 @@ export interface SoumissionStats {
   enAttente: number;
   approuvees: number;
   rejetees: number;
+  total_inscriptions: number;
+  inscriptions_presentiel: number;
+  inscriptions_en_ligne: number;
+  inscriptions_virtuel: number;
+  inscriptions_confirmees: number;
+  inscriptions_en_attente: number;
 }

@@ -22,11 +22,21 @@ type Config struct {
 	Port       string
 	UploadPath string
 
+	AppBaseURL string
+	APIBaseURL string
+
 	OrangeMoneyTestURL       string
 	OrangeMoneyProdURL       string
 	OrangeMoneyMerchantMSISDN string
-	OrangeMoneyAPIUsername   string
-	OrangeMoneyAPIPassword   string
+	OrangeMoneyAPIUsername    string
+	OrangeMoneyAPIPassword    string
+	OrangeMoneyWebhookSecret string
+
+	SMTPHost string
+	SMTPPort string
+	SMTPUser string
+	SMTPPass string
+	MailFrom string
 }
 
 var AppConfig *Config
@@ -49,11 +59,21 @@ func Load() *Config {
 		Port:       getEnv("PORT", "8080"),
 		UploadPath: getEnv("UPLOAD_PATH", "./uploads/soumissions"),
 
+		AppBaseURL: getEnv("APP_BASE_URL", "http://localhost:5173"),
+		APIBaseURL: getEnv("API_BASE_URL", "http://localhost:8080"),
+
 		OrangeMoneyTestURL:        getEnv("ORANGE_MONEY_TEST_URL", ""),
 		OrangeMoneyProdURL:        getEnv("ORANGE_MONEY_PROD_URL", ""),
 		OrangeMoneyMerchantMSISDN: getEnv("ORANGE_MONEY_MERCHANT_MSISDN", ""),
 		OrangeMoneyAPIUsername:    getEnv("ORANGE_MONEY_API_USERNAME", ""),
 		OrangeMoneyAPIPassword:    getEnv("ORANGE_MONEY_API_PASSWORD", ""),
+		OrangeMoneyWebhookSecret: getEnv("ORANGE_MONEY_WEBHOOK_SECRET", ""),
+
+		SMTPHost: getEnv("SMTP_HOST", ""),
+		SMTPPort: getEnv("SMTP_PORT", "1025"),
+		SMTPUser: getEnv("SMTP_USER", ""),
+		SMTPPass: getEnv("SMTP_PASS", ""),
+		MailFrom: getEnv("MAIL_FROM", "noreply@congres.app"),
 	}
 
 	cfg.DSN = fmt.Sprintf(

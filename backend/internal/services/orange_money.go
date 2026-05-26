@@ -26,6 +26,7 @@ type OrangeMoneyPaymentRequest struct {
 	CustomerPhone string  `json:"customer_phone"`
 	OrderID       string  `json:"order_id"`
 	Description   string  `json:"description"`
+	OTP           string  `json:"otp"`
 }
 
 type OrangeMoneyPaymentResponse struct {
@@ -47,6 +48,7 @@ type orangeMoneyRequestBody struct {
 	Lang           string  `json:"lang"`
 	CustomerPhone  string  `json:"customer_phone"`
 	Description    string  `json:"description"`
+	OtpCode        string  `json:"otp_code"`
 }
 
 // InitiatePayment sends a payment request to Orange Money.
@@ -84,12 +86,13 @@ func (s *OrangeMoneyService) InitiatePayment(req OrangeMoneyPaymentRequest) (*Or
 		Amount:         req.Amount,
 		Currency:       "XOF",
 		OrderID:        req.OrderID,
-		ReturnURL:      "http://localhost:5173/inscription/success",
-		CancelURL:      "http://localhost:5173/inscription/cancel",
-		NotifURL:       "http://localhost:8080/api/webhooks/orange-money",
+		ReturnURL:      s.cfg.AppBaseURL + "/inscription/success",
+		CancelURL:      s.cfg.AppBaseURL + "/inscription/cancel",
+		NotifURL:       s.cfg.APIBaseURL + "/api/webhooks/orange-money",
 		Lang:           "fr",
 		CustomerPhone:  req.CustomerPhone,
 		Description:    req.Description,
+		OtpCode:        req.OTP,
 	}
 
 	bodyBytes, err := json.Marshal(payload)

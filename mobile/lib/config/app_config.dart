@@ -1,22 +1,24 @@
 class AppConfig {
-  // Android emulator uses 10.0.2.2 to reach host's localhost
-  static const String baseUrl = 'http://10.0.2.2:8080/api';
+  // Use --dart-define=API_BASE_URL=... to override for Docker/real devices
+  // Default: 10.0.2.2 = Android emulator host loopback
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8080/api',
+  );
 
   // Auth endpoints
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
   static const String refreshEndpoint = '/auth/refresh';
-  static const String logoutEndpoint = '/auth/logout';
-  static const String meEndpoint = '/auth/me';
+
+  // Profile endpoint (not /auth/me)
+  static const String profileEndpoint = '/profile';
 
   // Soumission endpoints
   static const String soumissionsEndpoint = '/soumissions';
 
   // Notification endpoints
   static const String notificationsEndpoint = '/notifications';
-
-  // Profile endpoint
-  static const String profileEndpoint = '/profile';
 
   // Storage keys
   static const String accessTokenKey = 'access_token';

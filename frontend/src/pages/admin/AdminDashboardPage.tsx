@@ -14,6 +14,8 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  Users,
+  CreditCard,
 } from 'lucide-react'
 import { soumissionsApi, adminApi } from '@/lib/api'
 import { Soumission } from '@/types'
@@ -163,6 +165,12 @@ export function AdminDashboardPage() {
     enAttente: statsData?.en_attente ?? 0,
     approuvees: statsData?.approuvees ?? 0,
     rejetees: statsData?.rejetees ?? 0,
+    total_inscriptions: statsData?.total_inscriptions ?? 0,
+    inscriptions_presentiel: statsData?.inscriptions_presentiel ?? 0,
+    inscriptions_en_ligne: statsData?.inscriptions_en_ligne ?? 0,
+    inscriptions_virtuel: statsData?.inscriptions_virtuel ?? 0,
+    inscriptions_confirmees: statsData?.inscriptions_confirmees ?? 0,
+    inscriptions_en_attente: statsData?.inscriptions_en_attente ?? 0,
   }
 
   return (
@@ -173,7 +181,7 @@ export function AdminDashboardPage() {
         <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de toutes les soumissions</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats — Soumissions */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard
           title="Total"
@@ -209,6 +217,46 @@ export function AdminDashboardPage() {
           title="Approuvées"
           value={stats.approuvees}
           icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
+          color="bg-green-50"
+        />
+      </div>
+
+      {/* Stats — Inscriptions */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <StatCard
+          title="Inscriptions"
+          value={stats.total_inscriptions}
+          icon={<Users className="h-5 w-5 text-primary-600" />}
+          color="bg-primary-50"
+        />
+        <StatCard
+          title="Présentiel"
+          value={stats.inscriptions_presentiel}
+          icon={<Users className="h-5 w-5 text-blue-600" />}
+          color="bg-blue-50"
+        />
+        <StatCard
+          title="En ligne"
+          value={stats.inscriptions_en_ligne}
+          icon={<Users className="h-5 w-5 text-violet-600" />}
+          color="bg-violet-50"
+        />
+        <StatCard
+          title="Virtuel"
+          value={stats.inscriptions_virtuel}
+          icon={<Users className="h-5 w-5 text-teal-600" />}
+          color="bg-teal-50"
+        />
+        <StatCard
+          title="En attente"
+          value={stats.inscriptions_en_attente}
+          icon={<Clock className="h-5 w-5 text-yellow-600" />}
+          color="bg-yellow-50"
+        />
+        <StatCard
+          title="Confirmées"
+          value={stats.inscriptions_confirmees}
+          icon={<CreditCard className="h-5 w-5 text-green-600" />}
           color="bg-green-50"
         />
       </div>

@@ -29,7 +29,7 @@ class AuthService {
     } else {
       // Fetch user profile with the new token
       await StorageService.saveAccessToken(accessToken);
-      final profileResponse = await ApiService.get(AppConfig.meEndpoint);
+      final profileResponse = await ApiService.get(AppConfig.profileEndpoint);
       user = User.fromJson(profileResponse as Map<String, dynamic>);
     }
 
@@ -88,7 +88,7 @@ class AuthService {
       user = User.fromJson(response['user'] as Map<String, dynamic>);
     } else {
       await StorageService.saveAccessToken(accessToken);
-      final profileResponse = await ApiService.get(AppConfig.meEndpoint);
+      final profileResponse = await ApiService.get(AppConfig.profileEndpoint);
       user = User.fromJson(profileResponse as Map<String, dynamic>);
     }
 
@@ -101,27 +101,20 @@ class AuthService {
     return user;
   }
 
-  // Logout
+  // Logout — no backend endpoint, just clear local tokens
   static Future<void> logout() async {
-    try {
-      await ApiService.post(AppConfig.logoutEndpoint, {});
-    } catch (_) {
-      // Ignore errors on logout – still clear local data
-    } finally {
-      await StorageService.clearAll();
-    }
+    await StorageService.clearAll();
   }
 
   // Get current user profile
   static Future<User> getProfile() async {
-    final response = await ApiService.get(AppConfig.meEndpoint);
+    final response = await ApiService.get(AppConfig.profileEndpoint);
     return User.fromJson(response as Map<String, dynamic>);
   }
 
   // Update profile
   static Future<User> updateProfile(Map<String, dynamic> data) async {
     final response = await ApiService.patch(AppConfig.profileEndpoint, data);
-    // Some APIs return the user inside a key, handle both
     if (response is Map && response['user'] != null) {
       return User.fromJson(response['user'] as Map<String, dynamic>);
     }

@@ -102,6 +102,12 @@ export function DashboardPage() {
     enAttente: soumissions.filter((s) => s.statut === 'En attente').length,
     approuvees: soumissions.filter((s) => s.statut === 'Approuvée').length,
     rejetees: soumissions.filter((s) => s.statut === 'Rejetée').length,
+    total_inscriptions: 0,
+    inscriptions_presentiel: 0,
+    inscriptions_en_ligne: 0,
+    inscriptions_virtuel: 0,
+    inscriptions_confirmees: 0,
+    inscriptions_en_attente: 0,
   }
 
   return (

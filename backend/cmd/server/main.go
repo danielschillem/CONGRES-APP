@@ -33,11 +33,28 @@ func main() {
 	// Seed admin user
 	seedAdmin(db, cfg)
 
-	// Setup Gin router
-	router := gin.Default()
+	// Set Gin mode: default to release, override via GIN_MODE env var
+	mode := os.Getenv("GIN_MODE")
+	if mode == "" {
+		mode = gin.ReleaseMode
+	}
+	gin.SetMode(mode)
 
-	// Increase max multipart memory to 32 MB for file uploads
-	router.MaxMultipartMemory = 32 << 20
+	// Setup Gin router
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
+
+	// Trust proxies — default to Docker internal network, configurable via TRUSTED_PROXIES
+	trustedProxies := os.Getenv("TRUSTED_PROXIES")
+	if trustedProxies == "" {
+		trustedProxies = "172.0.0.0/8"
+	}
+	if err := router.SetTrustedProxies([]string{trustedProxies}); err != nil {
+		log.Printf("Warning: invalid TRUSTED_PROXIES value %q: %v", trustedProxies, err)
+	}
+
+	// Increase max multipart memory to 50 MB for file uploads
+	router.MaxMultipartMemory = 50 << 20
 
 	// Register all routes
 	routes.Setup(router, db, cfg)

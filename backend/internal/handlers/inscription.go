@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"congres-app/backend/internal/config"
+	"congres-app/backend/internal/middleware"
 	"congres-app/backend/internal/models"
 	"congres-app/backend/internal/services"
 	"congres-app/backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,13 +21,15 @@ type InscriptionHandler struct {
 	db             *gorm.DB
 	cfg            *config.Config
 	orangeMoneyService *services.OrangeMoneyService
+	mail           *services.MailService
 }
 
-func NewInscriptionHandler(db *gorm.DB, cfg *config.Config) *InscriptionHandler {
+func NewInscriptionHandler(db *gorm.DB, cfg *config.Config, mail *services.MailService) *InscriptionHandler {
 	return &InscriptionHandler{
 		db:             db,
 		cfg:            cfg,
 		orangeMoneyService: services.NewOrangeMoneyService(cfg),
+		mail:           mail,
 	}
 }
 
@@ -34,11 +38,12 @@ type CreateInscriptionRequest struct {
 	Prenom            string  `json:"prenom" binding:"required"`
 	Email             string  `json:"email" binding:"required,email"`
 	Telephone         string  `json:"telephone" binding:"required"`
-	Organisme         string  `json:"organisme" binding:"required"`
+	Organisme         string  `json:"organisme"`
 	Pays              string  `json:"pays" binding:"required"`
 	ParticipationType string  `json:"participation_type" binding:"required"`
 	Montant           float64 `json:"montant" binding:"required,gt=0"`
 	MethodePaiement   string  `json:"methode_paiement" binding:"required"`
+	CodeOTP           string  `json:"code_otp" binding:"required"`
 }
 
 func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
@@ -48,9 +53,12 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 		return
 	}
 
-	// Generate OTP code (6 digits)
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	codeOTP := fmt.Sprintf("%06d", rng.Intn(1000000))
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
 
 	// Generate unique invoice number
 	numeroFacture := generateInvoiceNumber()
@@ -62,6 +70,7 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 			CustomerPhone: req.Telephone,
 			OrderID:       numeroFacture,
 			Description:   fmt.Sprintf("Inscription au congrès - %s %s", req.Prenom, req.Nom),
+			OTP:           req.CodeOTP,
 		}
 
 		resp, err := h.orangeMoneyService.InitiatePayment(paymentReq)
@@ -77,6 +86,7 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 	}
 
 	inscription := models.Inscription{
+		UserID:            userID,
 		Nom:               req.Nom,
 		Prenom:            req.Prenom,
 		Email:             req.Email,
@@ -86,7 +96,6 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 		ParticipationType: req.ParticipationType,
 		Montant:           req.Montant,
 		MethodePaiement:   req.MethodePaiement,
-		CodeOTP:           codeOTP,
 		NumeroFacture:     numeroFacture,
 	}
 

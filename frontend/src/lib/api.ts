@@ -202,7 +202,12 @@ export const usersApi = {
 // Admin endpoints
 export const adminApi = {
   getStats: () => api.get('/admin/stats'),
-  getUsers: () => api.get('/admin/users'),
+  getUsers: (params?: Record<string, unknown>) =>
+    api.get('/admin/users', { params }),
+  deactivateUser: (id: string) =>
+    api.patch(`/admin/users/${id}/deactivate`),
+  getInscriptions: (params?: Record<string, unknown>) =>
+    api.get('/admin/inscriptions', { params }),
 }
 
 // Inscriptions endpoints
