@@ -34,6 +34,7 @@ export interface Congress {
   config?: Record<string, unknown> | null;
   badge_config?: Record<string, unknown> | null;
   admin_id?: string;
+  attestations_available?: boolean;
   status: CongressStatus;
   super_admin_id: string;
   created_at: string;

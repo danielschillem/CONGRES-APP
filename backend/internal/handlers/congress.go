@@ -434,6 +434,45 @@ func (h *CongressHandler) ToggleAttestations(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, gin.H{"attestations_available": newVal})
 }
 
+// @Summary     Lister les congrès actifs (public)
+// @Description Retourne la liste des congrès dont le statut est "active"
+// @Tags        public
+// @Produce     json
+// @Success     200 {object} utils.SuccessResponse{data=[]models.Congress}
+// @Router      /congresses [get]
+func (h *CongressHandler) ListActiveCongresses(c *gin.Context) {
+	var congresses []models.Congress
+	if err := h.db.Where("status = ?", "active").Order("start_date desc").Find(&congresses).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to fetch congresses")
+		return
+	}
+	utils.RespondSuccess(c, http.StatusOK, congresses)
+}
+
+// @Summary     Détails d'un congrès (public)
+// @Description Retourne les détails d'un congrès actif par son ID
+// @Tags        public
+// @Produce     json
+// @Param       id path string true "ID du congrès"
+// @Success     200 {object} utils.SuccessResponse{data=models.Congress}
+// @Failure     404 {object} utils.ErrorResponse
+// @Router      /congresses/{id} [get]
+func (h *CongressHandler) GetPublicCongress(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid congress ID")
+		return
+	}
+
+	var congress models.Congress
+	if err := h.db.Where("id = ? AND status = ?", id, "active").First(&congress).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Congress not found")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, congress)
+}
+
 // @Summary     Supprimer un congrès
 // @Description Supprime un congrès et son admin associé
 // @Tags        super-admin

@@ -9,6 +9,8 @@ import { authApi } from '@/lib/api'
 
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
+import { HomePage } from '@/pages/HomePage'
+import { CongressDetailPage } from '@/pages/CongressDetailPage'
 
 import { DashboardPage } from '@/pages/user/DashboardPage'
 import { SoumissionFormPage } from '@/pages/user/SoumissionFormPage'
@@ -104,8 +106,11 @@ function App() {
             </Route>
           </Route>
 
+          {/* Public pages */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/congress/:id" element={<CongressDetailPage />} />
+
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

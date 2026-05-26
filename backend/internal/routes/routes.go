@@ -48,6 +48,10 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		auth.POST("/logout", authHandler.Logout)
 	}
 
+	// ─── Congresses (public) ────────────────────────────────────────────
+	api.GET("/congresses", congressHandler.ListActiveCongresses)
+	api.GET("/congresses/:id", congressHandler.GetPublicCongress)
+
 	// ─── Webhooks (public) ──────────────────────────────────────────────
 	api.POST("/webhooks/orange-money", webhookHandler.HandleOrangeMoneyNotification)
 

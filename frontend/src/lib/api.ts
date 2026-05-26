@@ -253,6 +253,12 @@ export const superApi = {
     api.get('/super/actors', { params }),
 }
 
+// Public congresses endpoints
+export const congressesApi = {
+  getActive: () => api.get('/congresses'),
+  getOne: (id: string) => api.get(`/congresses/${id}`),
+}
+
 // Inscriptions endpoints
 export const inscriptionsApi = {
   create: (data: Record<string, unknown>) =>
