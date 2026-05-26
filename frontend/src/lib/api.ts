@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -46,8 +46,13 @@ api.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean
     }
+    const requestUrl = originalRequest?.url ?? ''
+    const isAuthRequest =
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/register') ||
+      requestUrl.includes('/auth/refresh')
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
@@ -162,11 +167,15 @@ export const soumissionsApi = {
 
   download: (id: string) =>
     api.get(`/admin/soumissions/${id}/download`, { responseType: 'blob' }),
+
+  exportCSV: (params?: Record<string, unknown>) =>
+    api.get('/admin/soumissions/export/csv', { params, responseType: 'blob' }),
 }
 
 // Notifications endpoints
 export const notificationsApi = {
-  getAll: () => api.get('/notifications'),
+  getAll: (params?: Record<string, unknown>) =>
+    api.get('/notifications', { params }),
 
   markAsRead: (id: string) => api.patch(`/notifications/${id}/read`),
 
@@ -208,6 +217,9 @@ export const adminApi = {
     api.patch(`/admin/users/${id}/deactivate`),
   getInscriptions: (params?: Record<string, unknown>) =>
     api.get('/admin/inscriptions', { params }),
+
+  exportInscriptionsCSV: (params?: Record<string, unknown>) =>
+    api.get('/admin/inscriptions/export/csv', { params, responseType: 'blob' }),
 }
 
 // Inscriptions endpoints

@@ -10,6 +10,10 @@ import {
   XCircle,
   Users,
   X,
+  DollarSign,
+  BadgeCheck,
+  Award,
+  Bell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -52,6 +56,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       label: 'Inscription',
       href: '/inscription',
       icon: <Users className="h-4 w-4" />,
+    },
+    {
+      label: 'Notifications',
+      href: '/notifications',
+      icon: <Bell className="h-4 w-4" />,
     },
     {
       label: 'Mon profil',
@@ -98,6 +107,21 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       icon: <Users className="h-4 w-4" />,
     },
     {
+      label: 'Finances',
+      href: '/admin/finances',
+      icon: <DollarSign className="h-4 w-4" />,
+    },
+    {
+      label: 'Badges',
+      href: '/admin/badges',
+      icon: <BadgeCheck className="h-4 w-4" />,
+    },
+    {
+      label: 'Attestations',
+      href: '/admin/attestations',
+      icon: <Award className="h-4 w-4" />,
+    },
+    {
       label: 'Mon profil',
       href: '/admin/profile',
       icon: <UserCircle className="h-4 w-4" />,
@@ -132,6 +156,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <span className="font-semibold text-gray-900 text-sm">Congrès Sci.</span>
           </div>
           <button
+            type="button"
+            title="Fermer le menu"
             onClick={onClose}
             className="lg:hidden rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
           >

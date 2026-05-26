@@ -8,18 +8,29 @@ export function useNotifications() {
   const { isAuthenticated } = useAuthStore()
 
   const { data: notificationsData, isLoading } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', 'recent'],
     queryFn: async () => {
-      const response = await notificationsApi.getAll()
+      const response = await notificationsApi.getAll({ limit: 10 })
       return response.data
     },
     enabled: isAuthenticated,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 30000,
+    staleTime: 10000,
+  })
+
+  const { data: unreadData } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async () => {
+      const response = await notificationsApi.getUnreadCount()
+      return response.data
+    },
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
     staleTime: 10000,
   })
 
   const notifications: Notification[] = notificationsData?.data ?? []
-  const unreadCount = notifications.filter((n) => !n.read_at).length
+  const unreadCount: number = unreadData?.data?.count ?? 0
 
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => notificationsApi.markAsRead(id),

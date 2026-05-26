@@ -46,6 +46,19 @@ type CreateInscriptionRequest struct {
 	CodeOTP           string  `json:"code_otp" binding:"required"`
 }
 
+// @Summary     Créer une inscription
+// @Description Inscrit un utilisateur au congrès avec paiement via Orange Money
+// @Tags        inscriptions
+// @Accept      json
+// @Produce     json
+// @Param       request body CreateInscriptionRequest true "Informations d'inscription"
+// @Success     201 {object} utils.SuccessResponse{data=models.Inscription}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     402 {object} utils.ErrorResponse
+// @Failure     502 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /inscriptions [post]
 func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 	var req CreateInscriptionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

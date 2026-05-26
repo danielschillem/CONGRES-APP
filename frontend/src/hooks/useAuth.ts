@@ -8,6 +8,8 @@ export function useAuth() {
   const { user, isAuthenticated, setAuth, setUser, logout: storeLogout } = useAuthStore()
 
   const login = async (email: string, password: string) => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
     const response = await authApi.login(email, password)
     const { user, access_token, refresh_token } = response.data.data
     setAuth(user as User, access_token as string, refresh_token as string)

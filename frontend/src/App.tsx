@@ -11,12 +11,16 @@ import { DashboardPage } from '@/pages/user/DashboardPage'
 import { SoumissionFormPage } from '@/pages/user/SoumissionFormPage'
 import { SoumissionViewPage } from '@/pages/user/SoumissionViewPage'
 import { ProfilePage } from '@/pages/user/ProfilePage'
+import { NotificationsPage } from '@/pages/user/NotificationsPage'
 
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { AdminInscriptionsPage } from '@/pages/admin/AdminInscriptionsPage'
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { SoumissionDetailPage } from '@/pages/admin/SoumissionDetailPage'
 import { AdminProfilePage } from '@/pages/admin/AdminProfilePage'
+import { AdminFinancesPage } from '@/pages/admin/AdminFinancesPage'
+import { AdminBadgesPage } from '@/pages/admin/AdminBadgesPage'
+import { AdminAttestationsPage } from '@/pages/admin/AdminAttestationsPage'
 
 import { InscriptionPage } from '@/pages/InscriptionPage'
 
@@ -46,6 +50,7 @@ function App() {
               <Route path="/soumission/:id/modifier" element={<SoumissionFormPage />} />
               <Route path="/soumission/:id" element={<SoumissionViewPage />} />
               <Route path="/inscription" element={<InscriptionPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>
@@ -58,6 +63,9 @@ function App() {
               <Route path="/admin/soumissions/:id" element={<SoumissionDetailPage />} />
               <Route path="/admin/inscriptions" element={<AdminInscriptionsPage />} />
               <Route path="/admin/utilisateurs" element={<AdminUsersPage />} />
+              <Route path="/admin/finances" element={<AdminFinancesPage />} />
+              <Route path="/admin/badges" element={<AdminBadgesPage />} />
+              <Route path="/admin/attestations" element={<AdminAttestationsPage />} />
               <Route path="/admin/profile" element={<AdminProfilePage />} />
             </Route>
           </Route>

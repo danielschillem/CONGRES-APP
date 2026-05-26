@@ -15,6 +15,7 @@ build/
 frontend/dist/
 mobile/build/
 public/build/
+*.exe
 
 # Logs and caches
 *.log

@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/csv"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"congres-app/backend/internal/config"
 	"congres-app/backend/internal/models"
@@ -30,6 +32,20 @@ type RejectRequest struct {
 	Raison string `json:"raison" binding:"required"`
 }
 
+// @Summary     Lister toutes les soumissions (admin)
+// @Description Retourne la liste paginée de toutes les soumissions avec filtres optionnels
+// @Tags        admin
+// @Produce     json
+// @Param       search  query string false "Recherche par titre, auteur, thème ou sujet"
+// @Param       type    query string false "Filtrer par type (Abstract, Poster, Communication)"
+// @Param       statut  query string false "Filtrer par statut (En attente, Approuvée, Rejetée)"
+// @Param       page    query int    false "Numéro de page (défaut: 1)"
+// @Param       limit   query int    false "Nombre d'éléments par page (défaut: 10)"
+// @Success     200 {object} utils.PaginatedResponse{data=[]models.Soumission}
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions [get]
 func (h *AdminHandler) ListSoumissions(c *gin.Context) {
 	search := c.Query("search")
 	submissionType := c.Query("type")
@@ -76,6 +92,18 @@ func (h *AdminHandler) ListSoumissions(c *gin.Context) {
 	utils.RespondPaginated(c, soumissions, total, page, limit)
 }
 
+// @Summary     Récupérer une soumission (admin)
+// @Description Retourne les détails d'une soumission avec les informations de l'utilisateur
+// @Tags        admin
+// @Produce     json
+// @Param       id path string true "ID de la soumission"
+// @Success     200 {object} utils.SuccessResponse{data=models.Soumission}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions/{id} [get]
 func (h *AdminHandler) GetSoumission(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -92,6 +120,18 @@ func (h *AdminHandler) GetSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
+// @Summary     Télécharger le fichier d'une soumission
+// @Description Télécharge le fichier PDF associé à une soumission
+// @Tags        admin
+// @Produce     application/pdf
+// @Param       id path string true "ID de la soumission"
+// @Success     200 {file} binary
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions/{id}/download [get]
 func (h *AdminHandler) DownloadSoumission(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -120,6 +160,18 @@ func (h *AdminHandler) DownloadSoumission(c *gin.Context) {
 	c.File(soumission.FilePath)
 }
 
+// @Summary     Approuver une soumission
+// @Description Approuve une soumission et notifie l'utilisateur par email
+// @Tags        admin
+// @Produce     json
+// @Param       id path string true "ID de la soumission"
+// @Success     200 {object} utils.SuccessResponse{data=models.Soumission}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions/{id}/approve [post]
 func (h *AdminHandler) ApproveSoumission(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -171,6 +223,20 @@ func (h *AdminHandler) ApproveSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
+// @Summary     Rejeter une soumission
+// @Description Rejette une soumission avec une raison et notifie l'utilisateur par email
+// @Tags        admin
+// @Accept      json
+// @Produce     json
+// @Param       id      path string       true "ID de la soumission"
+// @Param       request body RejectRequest true "Raison du rejet"
+// @Success     200 {object} utils.SuccessResponse{data=models.Soumission}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions/{id}/reject [post]
 func (h *AdminHandler) RejectSoumission(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -229,6 +295,18 @@ func (h *AdminHandler) RejectSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
+// @Summary     Supprimer une soumission (admin)
+// @Description Supprime une soumission et son fichier associé
+// @Tags        admin
+// @Produce     json
+// @Param       id path string true "ID de la soumission"
+// @Success     200 {object} utils.SuccessResponse{data=object{message=string}}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions/{id} [delete]
 func (h *AdminHandler) DeleteSoumission(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -271,6 +349,15 @@ type StatsResponse struct {
 	InscriptionsEnAttente  int64 `json:"inscriptions_en_attente"`
 }
 
+// @Summary     Obtenir les statistiques
+// @Description Retourne les statistiques globales des soumissions et inscriptions
+// @Tags        admin
+// @Produce     json
+// @Success     200 {object} utils.SuccessResponse{data=StatsResponse}
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/stats [get]
 func (h *AdminHandler) GetStats(c *gin.Context) {
 	var stats StatsResponse
 
@@ -292,6 +379,20 @@ func (h *AdminHandler) GetStats(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, stats)
 }
 
+// @Summary     Lister les inscriptions (admin)
+// @Description Retourne la liste paginée de toutes les inscriptions avec filtres optionnels
+// @Tags        admin
+// @Produce     json
+// @Param       participation_type query string false "Filtrer par type de participation"
+// @Param       pays               query string false "Filtrer par pays"
+// @Param       payment_status     query string false "Filtrer par statut de paiement"
+// @Param       page               query int    false "Numéro de page (défaut: 1)"
+// @Param       limit              query int    false "Nombre d'éléments par page (défaut: 10)"
+// @Success     200 {object} utils.PaginatedResponse{data=[]models.Inscription}
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/inscriptions [get]
 func (h *AdminHandler) ListInscriptions(c *gin.Context) {
 	participationType := c.Query("participation_type")
 	pays := c.Query("pays")
@@ -334,6 +435,166 @@ func (h *AdminHandler) ListInscriptions(c *gin.Context) {
 	utils.RespondPaginated(c, inscriptions, total, page, limit)
 }
 
+// @Summary     Exporter les soumissions en CSV
+// @Description Exporte la liste des soumissions au format CSV avec filtres optionnels
+// @Tags        admin
+// @Produce     text/csv
+// @Param       search  query string false "Recherche"
+// @Param       type    query string false "Filtrer par type"
+// @Param       statut  query string false "Filtrer par statut"
+// @Success     200 {file} binary
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/soumissions/export/csv [get]
+func (h *AdminHandler) ExportSoumissionsCSV(c *gin.Context) {
+	search := c.Query("search")
+	submissionType := c.Query("type")
+	statut := c.Query("statut")
+
+	query := h.db.Model(&models.Soumission{}).Preload("User").Order("created_at desc")
+
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where(
+			"document_title ILIKE ? OR author_name ILIKE ? OR theme ILIKE ? OR topics ILIKE ?",
+			like, like, like, like,
+		)
+	}
+	if submissionType != "" {
+		query = query.Where("submission_type = ?", submissionType)
+	}
+	if statut != "" {
+		query = query.Where("statut = ?", statut)
+	}
+
+	var soumissions []models.Soumission
+	if err := query.Find(&soumissions).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to export soumissions")
+		return
+	}
+
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"soumissions_%s.csv\"", time.Now().Format("2006-01-02")))
+
+	// Write BOM for Excel compatibility
+	c.Writer.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	writer := csv.NewWriter(c.Writer)
+	defer writer.Flush()
+
+	writer.Write([]string{
+		"ID", "Auteur", "Email", "Type", "Thème", "Titre",
+		"Statut", "Raison Rejet", "Créé le", "Mis à jour le",
+	})
+
+	for _, s := range soumissions {
+		authorName := s.AuthorName
+		authorEmail := ""
+		if s.User.Email != "" {
+			authorEmail = s.User.Email
+		}
+		raison := ""
+		if s.RaisonRejet != nil {
+			raison = *s.RaisonRejet
+		}
+		writer.Write([]string{
+			s.ID.String(),
+			authorName,
+			authorEmail,
+			s.SubmissionType,
+			s.Theme,
+			s.DocumentTitle,
+			s.Statut,
+			raison,
+			s.CreatedAt.Format("2006-01-02 15:04:05"),
+			s.UpdatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+}
+
+// @Summary     Exporter les inscriptions en CSV
+// @Description Exporte la liste des inscriptions au format CSV avec filtres optionnels
+// @Tags        admin
+// @Produce     text/csv
+// @Param       participation_type query string false "Filtrer par type de participation"
+// @Param       pays               query string false "Filtrer par pays"
+// @Param       payment_status     query string false "Filtrer par statut de paiement"
+// @Success     200 {file} binary
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/inscriptions/export/csv [get]
+func (h *AdminHandler) ExportInscriptionsCSV(c *gin.Context) {
+	participationType := c.Query("participation_type")
+	pays := c.Query("pays")
+	paymentStatus := c.Query("payment_status")
+
+	query := h.db.Model(&models.Inscription{}).Order("created_at desc")
+
+	if participationType != "" {
+		query = query.Where("participation_type = ?", participationType)
+	}
+	if pays != "" {
+		query = query.Where("pays = ?", pays)
+	}
+	if paymentStatus != "" {
+		query = query.Where("payment_status = ?", paymentStatus)
+	}
+
+	var inscriptions []models.Inscription
+	if err := query.Find(&inscriptions).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to export inscriptions")
+		return
+	}
+
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"inscriptions_%s.csv\"", time.Now().Format("2006-01-02")))
+
+	// Write BOM for Excel compatibility
+	c.Writer.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	writer := csv.NewWriter(c.Writer)
+	defer writer.Flush()
+
+	writer.Write([]string{
+		"ID", "Nom", "Prénom", "Email", "Téléphone", "Organisme",
+		"Pays", "Type Participation", "Montant (FCFA)", "Méthode Paiement",
+		"N° Facture", "Transaction ID", "Statut Paiement", "Date inscription",
+	})
+
+	for _, s := range inscriptions {
+		writer.Write([]string{
+			strconv.FormatUint(uint64(s.ID), 10),
+			s.Nom,
+			s.Prenom,
+			s.Email,
+			s.Telephone,
+			s.Organisme,
+			s.Pays,
+			s.ParticipationType,
+			fmt.Sprintf("%.0f", s.Montant),
+			s.MethodePaiement,
+			s.NumeroFacture,
+			s.TransactionID,
+			s.PaymentStatus,
+			s.CreatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+}
+
+// @Summary     Lister les utilisateurs (admin)
+// @Description Retourne la liste paginée de tous les utilisateurs avec recherche optionnelle
+// @Tags        admin
+// @Produce     json
+// @Param       search query string false "Recherche par nom, prénom, email ou téléphone"
+// @Param       page   query int    false "Numéro de page (défaut: 1)"
+// @Param       limit  query int    false "Nombre d'éléments par page (défaut: 10)"
+// @Success     200 {object} utils.PaginatedResponse{data=[]models.User}
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/users [get]
 func (h *AdminHandler) ListUsers(c *gin.Context) {
 	search := c.Query("search")
 
@@ -372,6 +633,18 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 	utils.RespondPaginated(c, users, total, page, limit)
 }
 
+// @Summary     Activer/Désactiver un utilisateur
+// @Description Bascule le statut actif d'un utilisateur (activation/désactivation)
+// @Tags        admin
+// @Produce     json
+// @Param       id path string true "ID de l'utilisateur"
+// @Success     200 {object} utils.SuccessResponse{data=object{message=string,user=models.User}}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/users/{id}/deactivate [patch]
 func (h *AdminHandler) DeactivateUser(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {

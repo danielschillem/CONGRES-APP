@@ -38,6 +38,15 @@ type UpdateProfileRequest struct {
 	Email      string  `json:"email"`
 }
 
+// @Summary     Récupérer le profil utilisateur
+// @Description Retourne les informations du profil de l'utilisateur connecté
+// @Tags        profile
+// @Produce     json
+// @Success     200 {object} utils.SuccessResponse{data=models.User}
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /profile [get]
 func (h *ProfileHandler) GetProfile(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -55,6 +64,19 @@ func (h *ProfileHandler) GetProfile(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, user)
 }
 
+// @Summary     Mettre à jour le profil utilisateur
+// @Description Modifie les informations du profil de l'utilisateur connecté
+// @Tags        profile
+// @Accept      json
+// @Produce     json
+// @Param       request body UpdateProfileRequest true "Informations du profil à mettre à jour"
+// @Success     200 {object} utils.SuccessResponse{data=models.User}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Failure     409 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /profile [patch]
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -130,6 +152,18 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, user)
 }
 
+// @Summary     Changer le mot de passe
+// @Description Permet à l'utilisateur connecté de modifier son mot de passe
+// @Tags        profile
+// @Accept      json
+// @Produce     json
+// @Param       request body ChangePasswordRequest true "Ancien et nouveau mot de passe"
+// @Success     200 {object} utils.SuccessResponse{data=object{message=string}}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /profile/password [patch]
 func (h *ProfileHandler) ChangePassword(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -170,6 +204,15 @@ func (h *ProfileHandler) ChangePassword(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
+// @Summary     Supprimer le compte utilisateur
+// @Description Supprime définitivement le compte de l'utilisateur connecté ainsi que ses données associées
+// @Tags        profile
+// @Produce     json
+// @Success     200 {object} utils.SuccessResponse{data=object{message=string}}
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /profile [delete]
 func (h *ProfileHandler) DeleteProfile(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))

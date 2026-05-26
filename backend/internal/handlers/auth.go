@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"congres-app/backend/internal/config"
@@ -61,12 +62,23 @@ func (h *AuthHandler) persistRefreshToken(tokenString string, userID uuid.UUID) 
 	return h.db.Create(&rt).Error
 }
 
+// @Summary     Inscription d'un nouvel utilisateur
+// @Description Crée un nouveau compte utilisateur avec les informations fournies et retourne les tokens d'accès
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request body RegisterRequest true "Informations d'inscription"
+// @Success     201 {object} utils.SuccessResponse{data=AuthResponse}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     409 {object} utils.ErrorResponse
+// @Router      /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 
 	var existing models.User
 	if err := h.db.Where("email = ?", req.Email).First(&existing).Error; err == nil {
@@ -130,12 +142,23 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
+// @Summary     Connexion utilisateur
+// @Description Authentifie un utilisateur avec email et mot de passe et retourne les tokens d'accès
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request body LoginRequest true "Identifiants de connexion"
+// @Success     200 {object} utils.SuccessResponse{data=AuthResponse}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Router      /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 
 	var user models.User
 	if err := h.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
@@ -172,6 +195,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+// @Summary     Rafraîchir le token d'accès
+// @Description Génère un nouveau token d'accès à partir d'un refresh token valide
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request body RefreshRequest true "Refresh token"
+// @Success     200 {object} utils.SuccessResponse{data=object{access_token=string,refresh_token=string}}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Router      /auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

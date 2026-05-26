@@ -9,10 +9,15 @@ import (
 	"congres-app/backend/internal/services"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
 )
 
 func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
+	// Swagger documentation endpoint
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Apply CORS middleware globally
 	router.Use(middleware.CORS())
 
@@ -88,6 +93,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 			adminSoumissions := admin.Group("/soumissions")
 			{
 				adminSoumissions.GET("", adminHandler.ListSoumissions)
+				adminSoumissions.GET("/export/csv", adminHandler.ExportSoumissionsCSV)
 				adminSoumissions.GET("/:id", adminHandler.GetSoumission)
 				adminSoumissions.GET("/:id/download", adminHandler.DownloadSoumission)
 				adminSoumissions.POST("/:id/approve", adminHandler.ApproveSoumission)
@@ -97,6 +103,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 			// Inscriptions management
 			admin.GET("/inscriptions", adminHandler.ListInscriptions)
+			admin.GET("/inscriptions/export/csv", adminHandler.ExportInscriptionsCSV)
 
 			// Stats and users
 			admin.GET("/stats", adminHandler.GetStats)

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { soumissionsApi, adminApi } from '@/lib/api'
 import { Soumission } from '@/types'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -49,6 +49,101 @@ import {
 import { formatDate, truncate } from '@/lib/utils'
 
 const PAGE_SIZE = 10
+
+// ─── Donut Chart ──────────────────────────────────────────────────────────────
+
+interface DonutSegment {
+  label: string
+  value: number
+  color: string
+}
+
+function DonutChart({
+  segments,
+  size = 120,
+  strokeWidth = 22,
+}: {
+  segments: DonutSegment[]
+  size?: number
+  strokeWidth?: number
+}) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const total = segments.reduce((s, seg) => s + seg.value, 0)
+  let cumulativePercent = 0
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {total === 0 ? (
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#e5e7eb"
+          strokeWidth={strokeWidth}
+        />
+      ) : (
+        segments.map((seg, i) => {
+          const pct = seg.value / total
+          if (pct === 0) return null
+          const dashLength = pct * circumference
+          const rotationDeg = cumulativePercent * 360 - 90
+          cumulativePercent += pct
+          return (
+            <circle
+              key={i}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${dashLength} ${circumference - dashLength}`}
+              transform={`rotate(${rotationDeg} ${size / 2} ${size / 2})`}
+            />
+          )
+        })
+      )}
+      <text
+        x={size / 2}
+        y={size / 2}
+        dominantBaseline="middle"
+        textAnchor="middle"
+        style={{ fontSize: 18, fontWeight: 700, fill: '#1f2937' }}
+      >
+        {total}
+      </text>
+    </svg>
+  )
+}
+
+function DonutLegend({ segments }: { segments: DonutSegment[] }) {
+  const total = segments.reduce((s, seg) => s + seg.value, 0)
+  return (
+    <div className="space-y-2">
+      {segments.map((seg) => (
+        <div key={seg.label} className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+              style={{ background: seg.color }}
+            />
+            <span className="text-xs text-gray-600">{seg.label}</span>
+          </div>
+          <span className="text-xs font-semibold text-gray-800">
+            {seg.value}
+            <span className="text-gray-400 font-normal ml-1">
+              ({total > 0 ? Math.round((seg.value / total) * 100) : 0}%)
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 
 function StatCard({
   title,
@@ -81,11 +176,13 @@ function StatCard({
 function statutBadge(statut: Soumission['statut']) {
   const map = {
     'En attente': <Badge variant="warning">En attente</Badge>,
-    'Approuvée': <Badge variant="success">Approuvée</Badge>,
-    'Rejetée': <Badge variant="destructive">Rejetée</Badge>,
+    Approuvée: <Badge variant="success">Approuvée</Badge>,
+    Rejetée: <Badge variant="destructive">Rejetée</Badge>,
   }
   return map[statut]
 }
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function AdminDashboardPage() {
   const queryClient = useQueryClient()
@@ -97,10 +194,7 @@ export function AdminDashboardPage() {
   const [page, setPage] = useState(1)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const queryParams: Record<string, unknown> = {
-    page,
-    limit: PAGE_SIZE,
-  }
+  const queryParams: Record<string, unknown> = { page, limit: PAGE_SIZE }
   if (search) queryParams.search = search
   if (typeFilter !== 'all') queryParams.submission_type = typeFilter
   if (statutFilter !== 'all') queryParams.statut = statutFilter
@@ -173,12 +267,35 @@ export function AdminDashboardPage() {
     inscriptions_en_attente: statsData?.inscriptions_en_attente ?? 0,
   }
 
+  const soumissionsSegments: DonutSegment[] = [
+    { label: 'Abstracts', value: stats.abstracts, color: '#3b82f6' },
+    { label: 'Posters', value: stats.posters, color: '#8b5cf6' },
+    { label: 'Communications', value: stats.communications, color: '#14b8a6' },
+  ]
+
+  const statutSegments: DonutSegment[] = [
+    { label: 'En attente', value: stats.enAttente, color: '#f59e0b' },
+    { label: 'Approuvées', value: stats.approuvees, color: '#22c55e' },
+    { label: 'Rejetées', value: stats.rejetees, color: '#ef4444' },
+  ]
+
+  const inscriptionsSegments: DonutSegment[] = [
+    { label: 'Présentiel', value: stats.inscriptions_presentiel, color: '#6366f1' },
+    { label: 'En ligne', value: stats.inscriptions_en_ligne, color: '#0ea5e9' },
+    { label: 'Virtuel', value: stats.inscriptions_virtuel, color: '#a855f7' },
+  ]
+
+  const inscriptionsStatutSegments: DonutSegment[] = [
+    { label: 'Confirmées', value: stats.inscriptions_confirmees, color: '#22c55e' },
+    { label: 'En attente', value: stats.inscriptions_en_attente, color: '#f59e0b' },
+  ]
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
-        <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de toutes les soumissions</p>
+        <p className="text-gray-500 text-sm mt-1">Vue d'ensemble du congrès</p>
       </div>
 
       {/* Stats — Soumissions */}
@@ -261,10 +378,71 @@ export function AdminDashboardPage() {
         />
       </div>
 
+      {/* Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Soumissions par type
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <DonutChart segments={soumissionsSegments} />
+              <DonutLegend segments={soumissionsSegments} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Soumissions par statut
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <DonutChart segments={statutSegments} />
+              <DonutLegend segments={statutSegments} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Inscriptions par type
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <DonutChart segments={inscriptionsSegments} />
+              <DonutLegend segments={inscriptionsSegments} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Inscriptions — statut paiement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <DonutChart segments={inscriptionsStatutSegments} />
+              <DonutLegend segments={inscriptionsStatutSegments} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3 bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex-1 min-w-[200px] space-y-1.5">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Recherche</label>
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Recherche
+          </label>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
@@ -279,7 +457,13 @@ export function AdminDashboardPage() {
 
         <div className="w-40 space-y-1.5">
           <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</label>
-          <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1) }}>
+          <Select
+            value={typeFilter}
+            onValueChange={(v) => {
+              setTypeFilter(v)
+              setPage(1)
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Tous les types" />
             </SelectTrigger>
@@ -293,8 +477,16 @@ export function AdminDashboardPage() {
         </div>
 
         <div className="w-40 space-y-1.5">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Statut</label>
-          <Select value={statutFilter} onValueChange={(v) => { setStatutFilter(v); setPage(1) }}>
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Statut
+          </label>
+          <Select
+            value={statutFilter}
+            onValueChange={(v) => {
+              setStatutFilter(v)
+              setPage(1)
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Tous les statuts" />
             </SelectTrigger>

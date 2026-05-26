@@ -83,6 +83,14 @@ func createUserNotification(db *gorm.DB, notifType string, userID uuid.UUID, sou
 	db.Create(&notif)
 }
 
+// @Summary     Lister les soumissions de l'utilisateur
+// @Description Retourne la liste des soumissions de l'utilisateur connecté, triées par date de création
+// @Tags        soumissions
+// @Produce     json
+// @Success     200 {object} utils.SuccessResponse{data=[]models.Soumission}
+// @Failure     401 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /soumissions [get]
 func (h *SoumissionHandler) ListUserSoumissions(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -100,6 +108,24 @@ func (h *SoumissionHandler) ListUserSoumissions(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumissions)
 }
 
+// @Summary     Créer une nouvelle soumission
+// @Description Soumet un document (PDF) avec les métadonnées associées pour un congrès
+// @Tags        soumissions
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       submission_type formData string true "Type de soumission (Abstract, Poster, Communication)"
+// @Param       theme formData string true "Thème"
+// @Param       topics formData string true "Sujets"
+// @Param       document_title formData string true "Titre du document"
+// @Param       author_name formData string true "Nom de l'auteur"
+// @Param       resume formData string true "Résumé"
+// @Param       keywords formData string false "Mots-clés (JSON array ou séparés par des virgules)"
+// @Param       file formData file true "Fichier PDF"
+// @Success     201 {object} utils.SuccessResponse{data=models.Soumission}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /soumissions [post]
 func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -229,6 +255,17 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusCreated, soumission)
 }
 
+// @Summary     Récupérer une soumission
+// @Description Retourne les détails d'une soumission spécifique de l'utilisateur connecté
+// @Tags        soumissions
+// @Produce     json
+// @Param       id path string true "ID de la soumission"
+// @Success     200 {object} utils.SuccessResponse{data=models.Soumission}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /soumissions/{id} [get]
 func (h *SoumissionHandler) GetSoumission(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -252,6 +289,27 @@ func (h *SoumissionHandler) GetSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
+// @Summary     Modifier une soumission
+// @Description Met à jour les informations et/ou le fichier d'une soumission en attente
+// @Tags        soumissions
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       id path string true "ID de la soumission"
+// @Param       submission_type formData string false "Type de soumission (Abstract, Poster, Communication)"
+// @Param       theme formData string false "Thème"
+// @Param       topics formData string false "Sujets"
+// @Param       document_title formData string false "Titre du document"
+// @Param       author_name formData string false "Nom de l'auteur"
+// @Param       resume formData string false "Résumé"
+// @Param       keywords formData string false "Mots-clés"
+// @Param       file formData file false "Nouveau fichier PDF"
+// @Success     200 {object} utils.SuccessResponse{data=models.Soumission}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /soumissions/{id} [patch]
 func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -382,6 +440,17 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, soumission)
 }
 
+// @Summary     Supprimer une soumission
+// @Description Supprime une soumission de l'utilisateur connecté et son fichier associé
+// @Tags        soumissions
+// @Produce     json
+// @Param       id path string true "ID de la soumission"
+// @Success     200 {object} utils.SuccessResponse{data=object{message=string}}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /soumissions/{id} [delete]
 func (h *SoumissionHandler) DeleteSoumission(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))

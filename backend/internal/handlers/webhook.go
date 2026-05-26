@@ -38,6 +38,17 @@ type orangeMoneyWebhookPayload struct {
 	Signature     string `json:"signature"`
 }
 
+// @Summary     Webhook Orange Money
+// @Description Reçoit les notifications de paiement Orange Money pour les inscriptions
+// @Tags        webhooks
+// @Accept      json
+// @Produce     json
+// @Param       request body orangeMoneyWebhookPayload true "Payload du webhook Orange Money"
+// @Success     200 {object} utils.SuccessResponse{data=object{status=string}}
+// @Failure     400 {object} utils.ErrorResponse
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Router      /webhooks/orange-money [post]
 func (h *WebhookHandler) HandleOrangeMoneyNotification(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {

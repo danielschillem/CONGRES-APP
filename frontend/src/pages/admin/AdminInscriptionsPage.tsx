@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Users,
   Globe,
+  FileDown,
 } from 'lucide-react'
 import { adminApi } from '@/lib/api'
 import { Inscription } from '@/types'
@@ -60,6 +61,23 @@ export function AdminInscriptionsPage() {
   const total: number = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
+  const handleExportCSV = async () => {
+    try {
+      const exportParams: Record<string, unknown> = {}
+      if (typeFilter !== 'all') exportParams.participation_type = typeFilter
+      if (paymentFilter !== 'all') exportParams.payment_status = paymentFilter
+      const response = await adminApi.exportInscriptionsCSV(exportParams)
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `inscriptions_${new Date().toISOString().slice(0, 10)}.csv`
+      link.click()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      // handle silently
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -98,6 +116,11 @@ export function AdminInscriptionsPage() {
             </SelectContent>
           </Select>
         </div>
+
+        <Button variant="outline" onClick={handleExportCSV}>
+          <FileDown className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Table */}

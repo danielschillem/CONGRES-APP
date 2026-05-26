@@ -1,3 +1,13 @@
+// @title           Congrès API
+// @version         1.0
+// @description     API de gestion des congrès, soumissions et inscriptions
+// @host            localhost:8080
+// @BasePath        /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
+// @description     Bearer JWT token
 package main
 
 import (
@@ -72,22 +82,29 @@ func seedAdmin(db *gorm.DB, cfg *config.Config) {
 	const adminEmail = "admin@gestion.bf"
 	const adminPassword = "password123"
 
+	hashedPassword, err := utils.HashPassword(adminPassword)
+	if err != nil {
+		log.Printf("Warning: failed to hash admin password: %v", err)
+		return
+	}
+
 	var existing models.User
-	err := db.Where("email = ?", adminEmail).First(&existing).Error
+	err = db.Where("email = ?", adminEmail).First(&existing).Error
 	if err == nil {
-		// Admin already exists
-		log.Printf("Admin user already exists: %s", adminEmail)
+		if err := db.Model(&existing).Updates(map[string]interface{}{
+			"password": hashedPassword,
+			"role":     "admin",
+			"active":   true,
+		}).Error; err != nil {
+			log.Printf("Warning: failed to update admin user: %v", err)
+			return
+		}
+		log.Printf("Admin user ready: %s (password: %s)", adminEmail, adminPassword)
 		return
 	}
 
 	if err != gorm.ErrRecordNotFound {
 		log.Printf("Warning: could not check for admin user: %v", err)
-		return
-	}
-
-	hashedPassword, err := utils.HashPassword(adminPassword)
-	if err != nil {
-		log.Printf("Warning: failed to hash admin password: %v", err)
 		return
 	}
 

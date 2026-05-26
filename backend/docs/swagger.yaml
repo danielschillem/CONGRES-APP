@@ -1,0 +1,1593 @@
+basePath: /api
+definitions:
+  congres-app_backend_internal_models.Inscription:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      methode_paiement:
+        type: string
+      montant:
+        type: number
+      nom:
+        type: string
+      numero_facture:
+        type: string
+      organisme:
+        type: string
+      participation_type:
+        type: string
+      payment_status:
+        type: string
+      pays:
+        type: string
+      prenom:
+        type: string
+      telephone:
+        type: string
+      transaction_id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  congres-app_backend_internal_models.Notification:
+    properties:
+      created_at:
+        type: string
+      data:
+        items:
+          type: integer
+        type: array
+      id:
+        type: string
+      notifiable_id:
+        type: string
+      notifiable_type:
+        type: string
+      read_at:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  congres-app_backend_internal_models.Soumission:
+    properties:
+      author_name:
+        type: string
+      created_at:
+        type: string
+      document_title:
+        type: string
+      file_path:
+        type: string
+      id:
+        type: string
+      keywords:
+        items:
+          type: string
+        type: array
+      raison_rejet:
+        type: string
+      resume:
+        type: string
+      statut:
+        description: En attente, Approuvée, Rejetée
+        type: string
+      submission_type:
+        description: Abstract, Poster, Communication
+        type: string
+      theme:
+        type: string
+      topics:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/congres-app_backend_internal_models.User'
+      user_id:
+        type: string
+    type: object
+  congres-app_backend_internal_models.User:
+    properties:
+      active:
+        type: boolean
+      adresse:
+        type: string
+      biographie:
+        type: string
+      civilite:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      nom:
+        type: string
+      notifications:
+        items:
+          $ref: '#/definitions/congres-app_backend_internal_models.Notification'
+        type: array
+      organisme:
+        type: string
+      prenom:
+        type: string
+      profession:
+        type: string
+      role:
+        type: string
+      sexe:
+        type: string
+      soumissions:
+        items:
+          $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+        type: array
+      telephone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  congres-app_backend_pkg_utils.ErrorResponse:
+    properties:
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  congres-app_backend_pkg_utils.PaginatedResponse:
+    properties:
+      data: {}
+      limit:
+        type: integer
+      page:
+        type: integer
+      success:
+        type: boolean
+      total:
+        type: integer
+    type: object
+  congres-app_backend_pkg_utils.SuccessResponse:
+    properties:
+      data: {}
+      success:
+        type: boolean
+    type: object
+  internal_handlers.AuthResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/congres-app_backend_internal_models.User'
+    type: object
+  internal_handlers.ChangePasswordRequest:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        minLength: 6
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  internal_handlers.CreateInscriptionRequest:
+    properties:
+      code_otp:
+        type: string
+      email:
+        type: string
+      methode_paiement:
+        type: string
+      montant:
+        type: number
+      nom:
+        type: string
+      organisme:
+        type: string
+      participation_type:
+        type: string
+      pays:
+        type: string
+      prenom:
+        type: string
+      telephone:
+        type: string
+    required:
+    - code_otp
+    - email
+    - methode_paiement
+    - montant
+    - nom
+    - participation_type
+    - pays
+    - prenom
+    - telephone
+    type: object
+  internal_handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  internal_handlers.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  internal_handlers.RegisterRequest:
+    properties:
+      adresse:
+        type: string
+      biographie:
+        type: string
+      civilite:
+        type: string
+      email:
+        type: string
+      nom:
+        type: string
+      organisme:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      prenom:
+        type: string
+      profession:
+        type: string
+      sexe:
+        type: string
+      telephone:
+        type: string
+    required:
+    - civilite
+    - email
+    - nom
+    - password
+    - prenom
+    - sexe
+    - telephone
+    type: object
+  internal_handlers.RejectRequest:
+    properties:
+      raison:
+        type: string
+    required:
+    - raison
+    type: object
+  internal_handlers.StatsResponse:
+    properties:
+      approuvees:
+        type: integer
+      en_attente:
+        type: integer
+      inscriptions_confirmees:
+        type: integer
+      inscriptions_en_attente:
+        type: integer
+      inscriptions_en_ligne:
+        type: integer
+      inscriptions_presentiel:
+        type: integer
+      inscriptions_virtuel:
+        type: integer
+      rejetees:
+        type: integer
+      total:
+        type: integer
+      total_articles:
+        type: integer
+      total_communications:
+        type: integer
+      total_inscriptions:
+        type: integer
+      total_posters:
+        type: integer
+    type: object
+  internal_handlers.UpdateProfileRequest:
+    properties:
+      adresse:
+        type: string
+      biographie:
+        type: string
+      civilite:
+        type: string
+      email:
+        type: string
+      nom:
+        type: string
+      organisme:
+        type: string
+      prenom:
+        type: string
+      profession:
+        type: string
+      sexe:
+        type: string
+      telephone:
+        type: string
+    type: object
+  internal_handlers.orangeMoneyWebhookPayload:
+    properties:
+      amount:
+        type: string
+      order_id:
+        type: string
+      phone:
+        type: string
+      signature:
+        type: string
+      status:
+        type: string
+      transaction_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API de gestion des congrès, soumissions et inscriptions
+  title: Congrès API
+  version: "1.0"
+paths:
+  /admin/inscriptions:
+    get:
+      description: Retourne la liste paginée de toutes les inscriptions avec filtres
+        optionnels
+      parameters:
+      - description: Filtrer par type de participation
+        in: query
+        name: participation_type
+        type: string
+      - description: Filtrer par pays
+        in: query
+        name: pays
+        type: string
+      - description: Filtrer par statut de paiement
+        in: query
+        name: payment_status
+        type: string
+      - description: 'Numéro de page (défaut: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Nombre d''éléments par page (défaut: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.PaginatedResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/congres-app_backend_internal_models.Inscription'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Lister les inscriptions (admin)
+      tags:
+      - admin
+  /admin/inscriptions/export/csv:
+    get:
+      description: Exporte la liste des inscriptions au format CSV avec filtres optionnels
+      parameters:
+      - description: Filtrer par type de participation
+        in: query
+        name: participation_type
+        type: string
+      - description: Filtrer par pays
+        in: query
+        name: pays
+        type: string
+      - description: Filtrer par statut de paiement
+        in: query
+        name: payment_status
+        type: string
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Exporter les inscriptions en CSV
+      tags:
+      - admin
+  /admin/soumissions:
+    get:
+      description: Retourne la liste paginée de toutes les soumissions avec filtres
+        optionnels
+      parameters:
+      - description: Recherche par titre, auteur, thème ou sujet
+        in: query
+        name: search
+        type: string
+      - description: Filtrer par type (Abstract, Poster, Communication)
+        in: query
+        name: type
+        type: string
+      - description: Filtrer par statut (En attente, Approuvée, Rejetée)
+        in: query
+        name: statut
+        type: string
+      - description: 'Numéro de page (défaut: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Nombre d''éléments par page (défaut: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.PaginatedResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Lister toutes les soumissions (admin)
+      tags:
+      - admin
+  /admin/soumissions/{id}:
+    delete:
+      description: Supprime une soumission et son fichier associé
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    message:
+                      type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Supprimer une soumission (admin)
+      tags:
+      - admin
+    get:
+      description: Retourne les détails d'une soumission avec les informations de
+        l'utilisateur
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Récupérer une soumission (admin)
+      tags:
+      - admin
+  /admin/soumissions/{id}/approve:
+    post:
+      description: Approuve une soumission et notifie l'utilisateur par email
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approuver une soumission
+      tags:
+      - admin
+  /admin/soumissions/{id}/download:
+    get:
+      description: Télécharge le fichier PDF associé à une soumission
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/pdf
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Télécharger le fichier d'une soumission
+      tags:
+      - admin
+  /admin/soumissions/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Rejette une soumission avec une raison et notifie l'utilisateur
+        par email
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Raison du rejet
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.RejectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Rejeter une soumission
+      tags:
+      - admin
+  /admin/soumissions/export/csv:
+    get:
+      description: Exporte la liste des soumissions au format CSV avec filtres optionnels
+      parameters:
+      - description: Recherche
+        in: query
+        name: search
+        type: string
+      - description: Filtrer par type
+        in: query
+        name: type
+        type: string
+      - description: Filtrer par statut
+        in: query
+        name: statut
+        type: string
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Exporter les soumissions en CSV
+      tags:
+      - admin
+  /admin/stats:
+    get:
+      description: Retourne les statistiques globales des soumissions et inscriptions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handlers.StatsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtenir les statistiques
+      tags:
+      - admin
+  /admin/users:
+    get:
+      description: Retourne la liste paginée de tous les utilisateurs avec recherche
+        optionnelle
+      parameters:
+      - description: Recherche par nom, prénom, email ou téléphone
+        in: query
+        name: search
+        type: string
+      - description: 'Numéro de page (défaut: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Nombre d''éléments par page (défaut: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.PaginatedResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/congres-app_backend_internal_models.User'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Lister les utilisateurs (admin)
+      tags:
+      - admin
+  /admin/users/{id}/deactivate:
+    patch:
+      description: Bascule le statut actif d'un utilisateur (activation/désactivation)
+      parameters:
+      - description: ID de l'utilisateur
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    message:
+                      type: string
+                    user:
+                      $ref: '#/definitions/congres-app_backend_internal_models.User'
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Activer/Désactiver un utilisateur
+      tags:
+      - admin
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authentifie un utilisateur avec email et mot de passe et retourne
+        les tokens d'accès
+      parameters:
+      - description: Identifiants de connexion
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handlers.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      summary: Connexion utilisateur
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Génère un nouveau token d'accès à partir d'un refresh token valide
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    access_token:
+                      type: string
+                    refresh_token:
+                      type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      summary: Rafraîchir le token d'accès
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Crée un nouveau compte utilisateur avec les informations fournies
+        et retourne les tokens d'accès
+      parameters:
+      - description: Informations d'inscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handlers.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      summary: Inscription d'un nouvel utilisateur
+      tags:
+      - auth
+  /inscriptions:
+    post:
+      consumes:
+      - application/json
+      description: Inscrit un utilisateur au congrès avec paiement via Orange Money
+      parameters:
+      - description: Informations d'inscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.CreateInscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Inscription'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "402":
+          description: Payment Required
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Créer une inscription
+      tags:
+      - inscriptions
+  /notifications:
+    get:
+      description: Retourne la liste paginée des notifications de l'utilisateur connecté
+      parameters:
+      - description: 'Numéro de page (défaut: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Nombre d''éléments par page (défaut: 20)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.PaginatedResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/congres-app_backend_internal_models.Notification'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Lister les notifications
+      tags:
+      - notifications
+  /notifications/{id}/read:
+    patch:
+      description: Marque une notification spécifique comme lue pour l'utilisateur
+        connecté
+      parameters:
+      - description: ID de la notification
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Notification'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Marquer une notification comme lue
+      tags:
+      - notifications
+  /notifications/read-all:
+    post:
+      description: Marque toutes les notifications non lues de l'utilisateur connecté
+        comme lues
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    message:
+                      type: string
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Marquer toutes les notifications comme lues
+      tags:
+      - notifications
+  /notifications/unread-count:
+    get:
+      description: Retourne le nombre de notifications non lues de l'utilisateur connecté
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    count:
+                      type: integer
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Nombre de notifications non lues
+      tags:
+      - notifications
+  /profile:
+    delete:
+      description: Supprime définitivement le compte de l'utilisateur connecté ainsi
+        que ses données associées
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    message:
+                      type: string
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Supprimer le compte utilisateur
+      tags:
+      - profile
+    get:
+      description: Retourne les informations du profil de l'utilisateur connecté
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Récupérer le profil utilisateur
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      description: Modifie les informations du profil de l'utilisateur connecté
+      parameters:
+      - description: Informations du profil à mettre à jour
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mettre à jour le profil utilisateur
+      tags:
+      - profile
+  /profile/password:
+    patch:
+      consumes:
+      - application/json
+      description: Permet à l'utilisateur connecté de modifier son mot de passe
+      parameters:
+      - description: Ancien et nouveau mot de passe
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    message:
+                      type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Changer le mot de passe
+      tags:
+      - profile
+  /soumissions:
+    get:
+      description: Retourne la liste des soumissions de l'utilisateur connecté, triées
+        par date de création
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Lister les soumissions de l'utilisateur
+      tags:
+      - soumissions
+    post:
+      consumes:
+      - multipart/form-data
+      description: Soumet un document (PDF) avec les métadonnées associées pour un
+        congrès
+      parameters:
+      - description: Type de soumission (Abstract, Poster, Communication)
+        in: formData
+        name: submission_type
+        required: true
+        type: string
+      - description: Thème
+        in: formData
+        name: theme
+        required: true
+        type: string
+      - description: Sujets
+        in: formData
+        name: topics
+        required: true
+        type: string
+      - description: Titre du document
+        in: formData
+        name: document_title
+        required: true
+        type: string
+      - description: Nom de l'auteur
+        in: formData
+        name: author_name
+        required: true
+        type: string
+      - description: Résumé
+        in: formData
+        name: resume
+        required: true
+        type: string
+      - description: Mots-clés (JSON array ou séparés par des virgules)
+        in: formData
+        name: keywords
+        type: string
+      - description: Fichier PDF
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Créer une nouvelle soumission
+      tags:
+      - soumissions
+  /soumissions/{id}:
+    delete:
+      description: Supprime une soumission de l'utilisateur connecté et son fichier
+        associé
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    message:
+                      type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Supprimer une soumission
+      tags:
+      - soumissions
+    get:
+      description: Retourne les détails d'une soumission spécifique de l'utilisateur
+        connecté
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Récupérer une soumission
+      tags:
+      - soumissions
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Met à jour les informations et/ou le fichier d'une soumission en
+        attente
+      parameters:
+      - description: ID de la soumission
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type de soumission (Abstract, Poster, Communication)
+        in: formData
+        name: submission_type
+        type: string
+      - description: Thème
+        in: formData
+        name: theme
+        type: string
+      - description: Sujets
+        in: formData
+        name: topics
+        type: string
+      - description: Titre du document
+        in: formData
+        name: document_title
+        type: string
+      - description: Nom de l'auteur
+        in: formData
+        name: author_name
+        type: string
+      - description: Résumé
+        in: formData
+        name: resume
+        type: string
+      - description: Mots-clés
+        in: formData
+        name: keywords
+        type: string
+      - description: Nouveau fichier PDF
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/congres-app_backend_internal_models.Soumission'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Modifier une soumission
+      tags:
+      - soumissions
+  /webhooks/orange-money:
+    post:
+      consumes:
+      - application/json
+      description: Reçoit les notifications de paiement Orange Money pour les inscriptions
+      parameters:
+      - description: Payload du webhook Orange Money
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.orangeMoneyWebhookPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/congres-app_backend_pkg_utils.SuccessResponse'
+            - properties:
+                data:
+                  properties:
+                    status:
+                      type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/congres-app_backend_pkg_utils.ErrorResponse'
+      summary: Webhook Orange Money
+      tags:
+      - webhooks
+securityDefinitions:
+  BearerAuth:
+    description: Bearer JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

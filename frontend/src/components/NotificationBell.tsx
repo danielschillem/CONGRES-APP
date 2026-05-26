@@ -92,7 +92,7 @@ export function NotificationBell() {
             <p className="text-sm text-gray-500">Aucune notification</p>
           </div>
         ) : (
-          notifications.slice(0, 10).map((notification) => (
+          notifications.map((notification) => (
             <NotificationItem
               key={notification.id}
               notification={notification}

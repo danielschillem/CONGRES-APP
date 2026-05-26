@@ -1,0 +1,65 @@
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: congres_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Backend Go (Air hot reload) ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GIN_MODE: debug
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: congres_app
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-in-production}
+      PORT: 8080
+      UPLOAD_PATH: /app/uploads/soumissions
+    volumes:
+      - ./backend:/app
+      - uploads_dev:/app/uploads
+
+  # ── Frontend React (Vite HMR) ──────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    working_dir: /app
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_PROXY_TARGET: http://backend:8080
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run dev"
+
+volumes:
+  pg_data_dev:
+  uploads_dev:
