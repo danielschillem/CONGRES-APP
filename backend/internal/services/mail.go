@@ -1,6 +1,7 @@
 package services
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/smtp"
@@ -39,14 +40,45 @@ func (s *MailService) Send(to, subject, htmlBody string) error {
 
 	addr := fmt.Sprintf("%s:%s", s.cfg.SMTPHost, s.cfg.SMTPPort)
 
-	var auth smtp.Auth
+	tlsConfig := &tls.Config{ServerName: s.cfg.SMTPHost}
+	conn, err := tls.Dial("tcp", addr, tlsConfig)
+	if err != nil {
+		log.Printf("[Mail] Failed to connect to %s: %v", addr, err)
+		return fmt.Errorf("failed to connect to SMTP server: %w", err)
+	}
+	defer conn.Close()
+
+	client, err := smtp.NewClient(conn, s.cfg.SMTPHost)
+	if err != nil {
+		log.Printf("[Mail] Failed to create SMTP client: %v", err)
+		return fmt.Errorf("failed to create SMTP client: %w", err)
+	}
+	defer client.Close()
+
 	if s.cfg.SMTPUser != "" {
-		auth = smtp.PlainAuth("", s.cfg.SMTPUser, s.cfg.SMTPPass, s.cfg.SMTPHost)
+		auth := smtp.PlainAuth("", s.cfg.SMTPUser, s.cfg.SMTPPass, s.cfg.SMTPHost)
+		if err := client.Auth(auth); err != nil {
+			log.Printf("[Mail] SMTP auth failed: %v", err)
+			return fmt.Errorf("SMTP authentication failed: %w", err)
+		}
 	}
 
-	if err := smtp.SendMail(addr, auth, s.cfg.MailFrom, []string{to}, []byte(msg.String())); err != nil {
-		log.Printf("[Mail] Failed to send to %s: %v", to, err)
-		return fmt.Errorf("failed to send email: %w", err)
+	if err := client.Mail(s.cfg.MailFrom); err != nil {
+		return fmt.Errorf("failed to set MAIL FROM: %w", err)
+	}
+	if err := client.Rcpt(to); err != nil {
+		return fmt.Errorf("failed to set RCPT TO: %w", err)
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("failed to start data command: %w", err)
+	}
+	if _, err := w.Write([]byte(msg.String())); err != nil {
+		return fmt.Errorf("failed to write email body: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("failed to close data writer: %w", err)
 	}
 
 	log.Printf("[Mail] Sent to %s (subject: %s)", to, subject)

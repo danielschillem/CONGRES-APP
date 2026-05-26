@@ -13,6 +13,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"congres-app/backend/internal/config"
 	"congres-app/backend/internal/database"
@@ -36,7 +37,7 @@ func main() {
 	database.AutoMigrate(db)
 
 	// Ensure upload directory exists
-	if err := os.MkdirAll(cfg.UploadPath, 0755); err != nil {
+	if err := os.MkdirAll(cfg.UploadPath, 0700); err != nil {
 		log.Fatalf("Failed to create upload directory: %v", err)
 	}
 
@@ -54,12 +55,12 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	// Trust proxies — default to Docker internal network, configurable via TRUSTED_PROXIES
+	// Trust proxies — default to private ranges, configurable via TRUSTED_PROXIES
 	trustedProxies := os.Getenv("TRUSTED_PROXIES")
 	if trustedProxies == "" {
-		trustedProxies = "172.0.0.0/8"
+		trustedProxies = "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 	}
-	if err := router.SetTrustedProxies([]string{trustedProxies}); err != nil {
+	if err := router.SetTrustedProxies(strings.Split(trustedProxies, ",")); err != nil {
 		log.Printf("Warning: invalid TRUSTED_PROXIES value %q: %v", trustedProxies, err)
 	}
 
@@ -78,9 +79,14 @@ func main() {
 }
 
 // seedAdmin creates the default admin user if one does not already exist.
+// The admin password is read from the ADMIN_PASSWORD env var (default: "password123").
 func seedAdmin(db *gorm.DB, cfg *config.Config) {
 	const adminEmail = "admin@gestion.bf"
-	const adminPassword = "password123"
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	if adminPassword == "" {
+		adminPassword = "password123"
+		log.Println("Warning: using default admin password, set ADMIN_PASSWORD env var")
+	}
 
 	hashedPassword, err := utils.HashPassword(adminPassword)
 	if err != nil {
@@ -99,7 +105,7 @@ func seedAdmin(db *gorm.DB, cfg *config.Config) {
 			log.Printf("Warning: failed to update admin user: %v", err)
 			return
 		}
-		log.Printf("Admin user ready: %s (password: %s)", adminEmail, adminPassword)
+		log.Printf("Admin user ready: %s", adminEmail)
 		return
 	}
 
@@ -125,5 +131,5 @@ func seedAdmin(db *gorm.DB, cfg *config.Config) {
 		return
 	}
 
-	log.Printf("Admin user created: %s (password: %s)", adminEmail, adminPassword)
+	log.Printf("Admin user created: %s", adminEmail)
 }

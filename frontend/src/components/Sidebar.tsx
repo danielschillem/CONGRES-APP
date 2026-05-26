@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   FilePlus,
@@ -34,6 +34,7 @@ interface NavItem {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = async () => {
     await logout()
@@ -130,6 +131,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   const navItems = isAdmin ? adminNavItems : userNavItems
 
+  const isNavItemActive = (item: NavItem) => {
+    const itemUrl = new URL(item.href, window.location.origin)
+    const itemStatut = itemUrl.searchParams.get('statut')
+    const currentStatut = new URLSearchParams(location.search).get('statut')
+
+    if (location.pathname !== itemUrl.pathname) {
+      return false
+    }
+
+    if (itemUrl.pathname === '/admin/soumissions') {
+      return itemStatut ? currentStatut === itemStatut : currentStatut === null
+    }
+
+    return item.exact ? location.pathname === itemUrl.pathname : true
+  }
+
   return (
     <>
       {/* Mobile overlay */}
@@ -187,25 +204,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              end={item.exact}
-              onClick={onClose}
-              className={({ isActive }) =>
-                cn(
+          {navItems.map((item) => {
+            const isActive = isNavItemActive(item)
+
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={onClose}
+                className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary-50 text-primary-700 border border-primary-100'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                )
-              }
-            >
-              <span className="shrink-0">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
+                )}
+              >
+                <span className="shrink-0">{item.icon}</span>
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Logout */}

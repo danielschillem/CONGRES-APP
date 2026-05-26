@@ -67,18 +67,19 @@ func (h *WebhookHandler) HandleOrangeMoneyNotification(c *gin.Context) {
 		return
 	}
 
-	// Signature validation
-	if h.cfg.OrangeMoneyWebhookSecret != "" {
-		sig := computeHMACSHA256(string(body), h.cfg.OrangeMoneyWebhookSecret)
-		headerSig := c.GetHeader("X-Signature")
-		if headerSig == "" {
-			headerSig = payload.Signature
-		}
-		if !hmac.Equal([]byte(sig), []byte(headerSig)) {
-			log.Printf("[Webhook] Invalid signature for OrderID=%s", payload.OrderID)
-			utils.RespondError(c, http.StatusUnauthorized, "Invalid signature")
-			return
-		}
+	// Signature validation — compute HMAC over body without the signature field
+	payload.Signature = ""
+	cleanBody, _ := json.Marshal(payload)
+	headerSig := c.GetHeader("X-Signature")
+	if headerSig == "" {
+		utils.RespondError(c, http.StatusUnauthorized, "Missing X-Signature header")
+		return
+	}
+	sig := computeHMACSHA256(string(cleanBody), h.cfg.OrangeMoneyWebhookSecret)
+	if !hmac.Equal([]byte(sig), []byte(headerSig)) {
+		log.Printf("[Webhook] Invalid signature for OrderID=%s", payload.OrderID)
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid signature")
+		return
 	}
 
 	log.Printf("[Webhook] Payment notification for OrderID=%s: status=%s, txnID=%s",
@@ -107,6 +108,11 @@ func (h *WebhookHandler) HandleOrangeMoneyNotification(c *gin.Context) {
 
 	if updates["payment_status"] == "confirmed" {
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("[PANIC] Webhook mail: %v", r)
+				}
+			}()
 			var user models.User
 			if err := h.db.First(&user, "id = ?", inscription.UserID).Error; err == nil && user.Email != "" {
 				h.mail.InscriptionConfirmee(

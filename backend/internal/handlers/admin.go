@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -29,7 +30,7 @@ func NewAdminHandler(db *gorm.DB, mail *services.MailService, cfg *config.Config
 }
 
 type RejectRequest struct {
-	Raison string `json:"raison" binding:"required"`
+	Raison string `json:"raison" binding:"required,max=500"`
 }
 
 // @Summary     Lister toutes les soumissions (admin)
@@ -64,6 +65,9 @@ func (h *AdminHandler) ListSoumissions(c *gin.Context) {
 	query := h.db.Model(&models.Soumission{}).Preload("User")
 
 	if search != "" {
+		if len(search) > 100 {
+			search = search[:100]
+		}
 		like := "%" + search + "%"
 		query = query.Where(
 			"document_title ILIKE ? OR author_name ILIKE ? OR theme ILIKE ? OR topics ILIKE ?",
@@ -204,6 +208,11 @@ func (h *AdminHandler) ApproveSoumission(c *gin.Context) {
 	)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[PANIC] ApproveSoumission mail: %v", r)
+			}
+		}()
 		user := soumission.User
 		if user.Email == "" {
 			var u models.User
@@ -276,6 +285,11 @@ func (h *AdminHandler) RejectSoumission(c *gin.Context) {
 	)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[PANIC] RejectSoumission mail: %v", r)
+			}
+		}()
 		user := soumission.User
 		if user.Email == "" {
 			var u models.User
@@ -455,6 +469,9 @@ func (h *AdminHandler) ExportSoumissionsCSV(c *gin.Context) {
 	query := h.db.Model(&models.Soumission{}).Preload("User").Order("created_at desc")
 
 	if search != "" {
+		if len(search) > 100 {
+			search = search[:100]
+		}
 		like := "%" + search + "%"
 		query = query.Where(
 			"document_title ILIKE ? OR author_name ILIKE ? OR theme ILIKE ? OR topics ILIKE ?",
@@ -611,6 +628,9 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 	query := h.db.Model(&models.User{}).Order("created_at desc")
 
 	if search != "" {
+		if len(search) > 100 {
+			search = search[:100]
+		}
 		like := "%" + search + "%"
 		query = query.Where(
 			"nom ILIKE ? OR prenom ILIKE ? OR email ILIKE ? OR telephone ILIKE ?",

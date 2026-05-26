@@ -15,11 +15,12 @@ import (
 )
 
 func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
-	// Swagger documentation endpoint
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Apply global middleware
+	router.Use(middleware.CORS(cfg.CORSOrigins))
+	router.Use(middleware.SecurityHeaders())
 
-	// Apply CORS middleware globally
-	router.Use(middleware.CORS())
+	// Swagger documentation
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Initialize services
 	mailService := services.NewMailService(cfg)
@@ -42,6 +43,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		auth.POST("/register", authHandler.Register)
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/refresh", authHandler.Refresh)
+		auth.POST("/logout", authHandler.Logout)
 	}
 
 	// ─── Webhooks (public) ──────────────────────────────────────────────
@@ -83,6 +85,7 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		inscriptions := protected.Group("/inscriptions")
 		{
 			inscriptions.POST("", inscriptionHandler.CreateInscription)
+			inscriptions.GET("/me", inscriptionHandler.GetMyInscription)
 		}
 
 		// Admin routes

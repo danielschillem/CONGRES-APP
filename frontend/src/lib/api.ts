@@ -120,8 +120,8 @@ export const authApi = {
   register: (data: Record<string, unknown>) =>
     api.post('/auth/register', data),
 
-  // JWT is stateless — logout is handled client-side only
-  logout: () => Promise.resolve(),
+  logout: (refreshToken: string) =>
+    api.post('/auth/logout', { refresh_token: refreshToken }),
 
   // Profile doubles as "me"
   me: () => api.get('/profile'),
@@ -226,4 +226,6 @@ export const adminApi = {
 export const inscriptionsApi = {
   create: (data: Record<string, unknown>) =>
     api.post('/inscriptions', data),
+
+  getMy: () => api.get('/inscriptions/me'),
 }

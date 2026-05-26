@@ -1,8 +1,9 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"time"
 
@@ -120,12 +121,34 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusCreated, inscription)
 }
 
+// GetMyInscription returns the inscription of the currently authenticated user.
+func (h *InscriptionHandler) GetMyInscription(c *gin.Context) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	var inscription models.Inscription
+	if err := h.db.Where("user_id = ?", userID).Order("created_at desc").First(&inscription).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			utils.RespondSuccess(c, http.StatusOK, nil)
+			return
+		}
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to retrieve inscription")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, inscription)
+}
+
 // generateInvoiceNumber creates a unique invoice number with timestamp and random suffix.
 func generateInvoiceNumber() string {
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	now := time.Now()
+	n, _ := rand.Int(rand.Reader, big.NewInt(99999))
 	return fmt.Sprintf("FACT-%d%02d%02d-%05d",
 		now.Year(), now.Month(), now.Day(),
-		rng.Intn(99999),
+		n.Int64(),
 	)
 }

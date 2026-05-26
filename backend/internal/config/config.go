@@ -22,15 +22,17 @@ type Config struct {
 	Port       string
 	UploadPath string
 
+	CORSOrigins string
+
 	AppBaseURL string
 	APIBaseURL string
 
-	OrangeMoneyTestURL       string
-	OrangeMoneyProdURL       string
+	OrangeMoneyTestURL        string
+	OrangeMoneyProdURL        string
 	OrangeMoneyMerchantMSISDN string
 	OrangeMoneyAPIUsername    string
 	OrangeMoneyAPIPassword    string
-	OrangeMoneyWebhookSecret string
+	OrangeMoneyWebhookSecret  string
 
 	SMTPHost string
 	SMTPPort string
@@ -53,11 +55,13 @@ func Load() *Config {
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "password"),
 
-		JWTSecret:        getEnv("JWT_SECRET", "default-jwt-secret-change-in-production"),
-		JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", "default-refresh-secret-change-in-production"),
+		JWTSecret:        getEnv("JWT_SECRET", ""),
+		JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", ""),
 
 		Port:       getEnv("PORT", "8080"),
 		UploadPath: getEnv("UPLOAD_PATH", "./uploads/soumissions"),
+
+		CORSOrigins: getEnv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000"),
 
 		AppBaseURL: getEnv("APP_BASE_URL", "http://localhost:5173"),
 		APIBaseURL: getEnv("API_BASE_URL", "http://localhost:8080"),
@@ -67,13 +71,20 @@ func Load() *Config {
 		OrangeMoneyMerchantMSISDN: getEnv("ORANGE_MONEY_MERCHANT_MSISDN", ""),
 		OrangeMoneyAPIUsername:    getEnv("ORANGE_MONEY_API_USERNAME", ""),
 		OrangeMoneyAPIPassword:    getEnv("ORANGE_MONEY_API_PASSWORD", ""),
-		OrangeMoneyWebhookSecret: getEnv("ORANGE_MONEY_WEBHOOK_SECRET", ""),
+		OrangeMoneyWebhookSecret:  getEnv("ORANGE_MONEY_WEBHOOK_SECRET", ""),
 
 		SMTPHost: getEnv("SMTP_HOST", ""),
 		SMTPPort: getEnv("SMTP_PORT", "1025"),
 		SMTPUser: getEnv("SMTP_USER", ""),
 		SMTPPass: getEnv("SMTP_PASS", ""),
 		MailFrom: getEnv("MAIL_FROM", "noreply@congres.app"),
+	}
+
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is required")
+	}
+	if cfg.JWTRefreshSecret == "" {
+		log.Fatal("JWT_REFRESH_SECRET environment variable is required")
 	}
 
 	cfg.DSN = fmt.Sprintf(

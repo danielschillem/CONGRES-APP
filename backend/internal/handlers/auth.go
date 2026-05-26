@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ type RegisterRequest struct {
 	Organisme  *string `json:"organisme"`
 	Biographie *string `json:"biographie"`
 	Email      string  `json:"email" binding:"required,email"`
-	Password   string  `json:"password" binding:"required,min=6"`
+	Password   string  `json:"password" binding:"required,min=8"`
 }
 
 type LoginRequest struct {
@@ -81,13 +82,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 
 	var existing models.User
-	if err := h.db.Where("email = ?", req.Email).First(&existing).Error; err == nil {
-		utils.RespondError(c, http.StatusConflict, "Email already registered")
-		return
-	}
-
-	if err := h.db.Where("telephone = ?", req.Telephone).First(&existing).Error; err == nil {
-		utils.RespondError(c, http.StatusConflict, "Telephone already registered")
+	if err := h.db.Where("email = ? OR telephone = ?", req.Email, req.Telephone).First(&existing).Error; err == nil {
+		utils.RespondError(c, http.StatusConflict, "Email or telephone already registered")
 		return
 	}
 
@@ -161,7 +157,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 
 	var user models.User
-	if err := h.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
+	if err := h.db.Where("email = ? AND active = ?", req.Email, true).First(&user).Error; err != nil {
 		utils.RespondError(c, http.StatusUnauthorized, "Invalid email or password")
 		return
 	}
@@ -242,21 +238,29 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	}
 
 	now := time.Now()
-	if err := h.db.Model(&stored).Update("revoked_at", &now).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "Failed to revoke old refresh token")
-		return
-	}
-
 	newRefreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, h.cfg.JWTRefreshSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate refresh token")
 		return
 	}
 
-	if err := h.persistRefreshToken(newRefreshToken, user.ID); err != nil {
+	tx := h.db.Begin()
+	if err := tx.Model(&stored).Update("revoked_at", &now).Error; err != nil {
+		tx.Rollback()
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to revoke old refresh token")
+		return
+	}
+	if err := tx.Create(&models.RefreshToken{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		Token:     newRefreshToken,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+	}).Error; err != nil {
+		tx.Rollback()
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to persist new refresh token")
 		return
 	}
+	tx.Commit()
 
 	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, h.cfg.JWTSecret)
 	if err != nil {
@@ -268,4 +272,31 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		"access_token":  accessToken,
 		"refresh_token": newRefreshToken,
 	})
+}
+
+// @Summary     Déconnexion
+// @Description Révoque le refresh token côté serveur
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} utils.SuccessResponse{data=object{message=string}}
+// @Router      /auth/logout [post]
+func (h *AuthHandler) Logout(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "refresh_token is required")
+		return
+	}
+
+	now := time.Now()
+	if err := h.db.Model(&models.RefreshToken{}).
+		Where("token = ? AND revoked_at IS NULL", req.RefreshToken).
+		Update("revoked_at", &now).Error; err != nil {
+		// Log but don't fail — best-effort revocation
+		log.Printf("[Auth] Failed to revoke refresh token on logout: %v", err)
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Logged out successfully"})
 }

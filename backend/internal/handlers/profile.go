@@ -14,7 +14,7 @@ import (
 
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"current_password" binding:"required"`
-	NewPassword     string `json:"new_password" binding:"required,min=6"`
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
 }
 
 type ProfileHandler struct {
@@ -36,6 +36,8 @@ type UpdateProfileRequest struct {
 	Organisme  *string `json:"organisme"`
 	Biographie *string `json:"biographie"`
 	Email      string  `json:"email"`
+
+	CurrentPassword string `json:"current_password"`
 }
 
 // @Summary     Récupérer le profil utilisateur
@@ -99,6 +101,14 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 
 	// Check email uniqueness if changing
 	if req.Email != "" && req.Email != user.Email {
+		if req.CurrentPassword == "" {
+			utils.RespondError(c, http.StatusBadRequest, "Current password is required to change email")
+			return
+		}
+		if !utils.CheckPasswordHash(req.CurrentPassword, user.Password) {
+			utils.RespondError(c, http.StatusUnauthorized, "Current password is incorrect")
+			return
+		}
 		var existing models.User
 		if err := h.db.Where("email = ? AND id != ?", req.Email, userID).First(&existing).Error; err == nil {
 			utils.RespondError(c, http.StatusConflict, "Email already in use")

@@ -31,12 +31,8 @@ func TestRegister_Success(t *testing.T) {
 
 	h := handlers.NewAuthHandler(db, testutils.NewTestConfig())
 
-	// Email uniqueness check → not found (empty rows = record not found)
-	mock.ExpectQuery(`SELECT .+ FROM "users" WHERE email`).
-		WillReturnRows(sqlmock.NewRows(testutils.UserColumns()))
-
-	// Phone uniqueness check → not found
-	mock.ExpectQuery(`SELECT .+ FROM "users" WHERE telephone`).
+	// Uniqueness check → not found (empty rows = record not found)
+	mock.ExpectQuery(`SELECT .+ FROM "users"`).
 		WillReturnRows(sqlmock.NewRows(testutils.UserColumns()))
 
 	// Insert user
@@ -84,8 +80,8 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 
 	h := handlers.NewAuthHandler(db, testutils.NewTestConfig())
 
-	// Email check → found (conflict)
-	mock.ExpectQuery(`SELECT .+ FROM "users" WHERE email`).
+	// Uniqueness check → found (conflict)
+	mock.ExpectQuery(`SELECT .+ FROM "users"`).
 		WillReturnRows(testutils.UserRow(uuid.New(), "existing@example.com", "hashed", "user"))
 
 	body := `{
@@ -108,7 +104,7 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 	}
 	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
 	assert.False(t, resp.Success)
-	assert.Contains(t, resp.Error, "Email already registered")
+	assert.Contains(t, resp.Error, "Email or telephone already registered")
 }
 
 func TestRegister_InvalidData(t *testing.T) {
@@ -280,14 +276,10 @@ func TestRefresh_Success(t *testing.T) {
 	mock.ExpectQuery(`SELECT .+ FROM "users" WHERE id`).
 		WillReturnRows(testutils.UserRow(userID, "user@example.com", "hashedpw", "user"))
 
-	// Revoke old refresh token (UPDATE SET revoked_at)
+	// Revoke old + insert new (single transaction)
 	mock.ExpectBegin()
 	mock.ExpectExec(`UPDATE "refresh_tokens"`).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-
-	// Insert new refresh token
-	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO "refresh_tokens"`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()

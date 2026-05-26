@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,6 +36,11 @@ func NewSoumissionHandler(db *gorm.DB, cfg *config.Config, mail *services.MailSe
 
 // createAdminNotification creates a notification for all admin users about a soumission event.
 func createAdminNotification(db *gorm.DB, notifType string, soumission *models.Soumission, message string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[PANIC] createAdminNotification: %v", r)
+		}
+	}()
 	var admins []models.User
 	if err := db.Where("role = ?", "admin").Find(&admins).Error; err != nil {
 		return
@@ -168,15 +175,15 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 		return
 	}
 
-	// Validate file extension
-	if !strings.HasSuffix(strings.ToLower(file.Filename), ".pdf") {
-		utils.RespondError(c, http.StatusBadRequest, "Only PDF files are accepted")
+	// Validate PDF file
+	if err := validatePDFFile(file); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Ensure upload directory exists
 	uploadPath := h.cfg.UploadPath
-	if err := os.MkdirAll(uploadPath, 0755); err != nil {
+	if err := os.MkdirAll(uploadPath, 0700); err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to create upload directory")
 		return
 	}
@@ -238,6 +245,11 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 	)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[PANIC] CreateSoumission mail: %v", r)
+			}
+		}()
 		var admins []models.User
 		if err := h.db.Where("role = ?", "admin").Find(&admins).Error; err == nil {
 			for _, admin := range admins {
@@ -387,8 +399,27 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 			return
 		}
 
+		fileHeader := file.Header.Get("Content-Type")
+		if fileHeader != "" && fileHeader != "application/pdf" {
+			utils.RespondError(c, http.StatusBadRequest, "File content type is not PDF")
+			return
+		}
+
+		openedFile, err := file.Open()
+		if err != nil {
+			utils.RespondError(c, http.StatusInternalServerError, "Failed to read file")
+			return
+		}
+		magicBuf := make([]byte, 5)
+		if _, err := openedFile.Read(magicBuf); err != nil || string(magicBuf) != "%PDF-" {
+			openedFile.Close()
+			utils.RespondError(c, http.StatusBadRequest, "File content is not a valid PDF")
+			return
+		}
+		openedFile.Close()
+
 		uploadPath := h.cfg.UploadPath
-		if err := os.MkdirAll(uploadPath, 0755); err != nil {
+		if err := os.MkdirAll(uploadPath, 0700); err != nil {
 			utils.RespondError(c, http.StatusInternalServerError, "Failed to create upload directory")
 			return
 		}
@@ -423,6 +454,11 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 	)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[PANIC] UpdateSoumission mail: %v", r)
+			}
+		}()
 		var admins []models.User
 		if err := h.db.Where("role = ?", "admin").Find(&admins).Error; err == nil {
 			for _, admin := range admins {
@@ -485,17 +521,33 @@ func (h *SoumissionHandler) DeleteSoumission(c *gin.Context) {
 
 // sanitizeFilename removes unsafe characters from filenames.
 func sanitizeFilename(name string) string {
-	var sb strings.Builder
+	var result []rune
 	for _, r := range name {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
-			sb.WriteRune(r)
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			result = append(result, r)
 		} else {
-			sb.WriteRune('_')
+			result = append(result, '_')
 		}
 	}
-	result := sb.String()
-	if len(result) > 50 {
-		result = result[:50]
+	return string(result)
+}
+
+func validatePDFFile(file *multipart.FileHeader) error {
+	if !strings.HasSuffix(strings.ToLower(file.Filename), ".pdf") {
+		return fmt.Errorf("Only PDF files are accepted")
 	}
-	return result
+	fileHeader := file.Header.Get("Content-Type")
+	if fileHeader != "" && fileHeader != "application/pdf" {
+		return fmt.Errorf("File content type is not PDF")
+	}
+	openedFile, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("Failed to read file")
+	}
+	defer openedFile.Close()
+	magicBuf := make([]byte, 5)
+	if _, err := openedFile.Read(magicBuf); err != nil || string(magicBuf) != "%PDF-" {
+		return fmt.Errorf("File content is not a valid PDF")
+	}
+	return nil
 }

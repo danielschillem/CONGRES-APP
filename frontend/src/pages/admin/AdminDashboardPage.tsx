@@ -16,6 +16,10 @@ import {
   ChevronRight,
   Users,
   CreditCard,
+  DollarSign,
+  BadgeCheck,
+  Award,
+  ArrowRight,
 } from 'lucide-react'
 import { soumissionsApi, adminApi } from '@/lib/api'
 import { Soumission } from '@/types'
@@ -173,6 +177,40 @@ function StatCard({
   )
 }
 
+function ModuleCard({
+  title,
+  description,
+  href,
+  icon,
+  color,
+}: {
+  title: string
+  description: string
+  href: string
+  icon: React.ReactNode
+  color: string
+}) {
+  return (
+    <Link
+      to={href}
+      className="group block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-primary-200 hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${color}`}>
+            {icon}
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+            <p className="mt-1 text-sm leading-5 text-gray-500">{description}</p>
+          </div>
+        </div>
+        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary-600" />
+      </div>
+    </Link>
+  )
+}
+
 function statutBadge(statut: Soumission['statut']) {
   const map = {
     'En attente': <Badge variant="warning">En attente</Badge>,
@@ -296,6 +334,31 @@ export function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
         <p className="text-gray-500 text-sm mt-1">Vue d'ensemble du congrès</p>
+      </div>
+
+      {/* Modules de gestion */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <ModuleCard
+          title="Gestion des finances"
+          description="Suivre les revenus, les paiements confirmes et les transactions en attente."
+          href="/admin/finances"
+          icon={<DollarSign className="h-5 w-5 text-green-700" />}
+          color="bg-green-50"
+        />
+        <ModuleCard
+          title="Gestion des badges"
+          description="Generer et imprimer les badges des participants dont le paiement est confirme."
+          href="/admin/badges"
+          icon={<BadgeCheck className="h-5 w-5 text-blue-700" />}
+          color="bg-blue-50"
+        />
+        <ModuleCard
+          title="Gestion des attestations"
+          description="Preparer et imprimer les attestations de participation officielles."
+          href="/admin/attestations"
+          icon={<Award className="h-5 w-5 text-amber-700" />}
+          color="bg-amber-50"
+        />
       </div>
 
       {/* Stats — Soumissions */}

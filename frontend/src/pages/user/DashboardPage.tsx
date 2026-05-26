@@ -10,9 +10,12 @@ import {
   Pencil,
   Trash2,
   RefreshCw,
+  BadgeCheck,
+  Download,
+  Clock,
 } from 'lucide-react'
-import { soumissionsApi } from '@/lib/api'
-import { Soumission, SoumissionStats } from '@/types'
+import { soumissionsApi, inscriptionsApi } from '@/lib/api'
+import { Soumission, SoumissionStats, Inscription } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -59,6 +62,122 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+const CONGRESS_NAME = 'Congrès Scientifique International 2025'
+const CONGRESS_DATES = '15–18 Octobre 2025'
+const CONGRESS_LOCATION = 'Kinshasa, RDC'
+
+function badgeTypeColor(type: string) {
+  const map: Record<string, string> = {
+    'Présentiel': '#1e40af',
+    'En ligne': '#0369a1',
+    'Virtuel': '#6d28d9',
+  }
+  return map[type] ?? '#374151'
+}
+
+function openBadgeWindow(ins: Inscription) {
+  const pw = window.open('', '_blank', 'width=900,height=700')
+  if (!pw) return
+  const color = badgeTypeColor(ins.participation_type)
+  pw.document.write(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Mon badge — ${CONGRESS_NAME}</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; background: #f3f4f6; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+        .controls { margin-bottom: 24px; display: flex; gap: 12px; }
+        .controls button { padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .btn-primary { background: #1e40af; color: white; }
+        .btn-secondary { background: #6b7280; color: white; }
+        .badge {
+          width: 85mm; height: 54mm;
+          background: white; border: 2px solid #d1d5db; border-radius: 8px;
+          overflow: hidden; display: flex; flex-direction: column;
+        }
+        .badge-header { background: ${color}; color: white; font-size: 7.5px; font-weight: bold; text-align: center; padding: 5px 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .badge-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 12px; text-align: center; }
+        .badge-name { font-size: 16px; font-weight: bold; color: #111827; line-height: 1.2; }
+        .badge-org { font-size: 9px; color: #6b7280; margin-top: 3px; }
+        .badge-type-row { margin-top: 8px; }
+        .badge-type-pill { font-size: 9px; font-weight: bold; padding: 2px 10px; border-radius: 999px; background: ${color}20; color: ${color}; border: 1px solid ${color}40; }
+        .badge-footer { display: flex; justify-content: space-between; font-size: 7px; color: #9ca3af; padding: 4px 8px; border-top: 1px solid #f3f4f6; }
+        @media print { body { background: white; padding: 5mm; } .controls { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="controls">
+        <button class="btn-primary" onclick="window.print()">Imprimer / Télécharger</button>
+        <button class="btn-secondary" onclick="window.close()">Fermer</button>
+      </div>
+      <div class="badge">
+        <div class="badge-header">${CONGRESS_NAME}</div>
+        <div class="badge-body">
+          <div class="badge-name">${ins.prenom} ${ins.nom}</div>
+          ${ins.organisme ? `<div class="badge-org">${ins.organisme}</div>` : ''}
+          <div class="badge-type-row">
+            <span class="badge-type-pill">${ins.participation_type}</span>
+          </div>
+        </div>
+        <div class="badge-footer">
+          <span>${CONGRESS_DATES} • ${CONGRESS_LOCATION}</span>
+          <span>${ins.numero_facture}</span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `)
+  pw.document.close()
+}
+
+function BadgeSection() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['my-inscription'],
+    queryFn: async () => {
+      const res = await inscriptionsApi.getMy()
+      return res.data.data as Inscription | null
+    },
+  })
+
+  if (isLoading) return null
+  if (!data) return null
+
+  const confirmed = data.payment_status === 'confirmed'
+
+  return (
+    <div className={`rounded-xl border p-5 flex items-start gap-4 ${confirmed ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${confirmed ? 'bg-green-100' : 'bg-yellow-100'}`}>
+        {confirmed
+          ? <BadgeCheck className="h-5 w-5 text-green-700" />
+          : <Clock className="h-5 w-5 text-yellow-700" />
+        }
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`font-semibold text-sm ${confirmed ? 'text-green-900' : 'text-yellow-900'}`}>
+          {confirmed ? 'Votre badge est disponible' : 'Paiement en attente de confirmation'}
+        </p>
+        <p className={`text-xs mt-0.5 ${confirmed ? 'text-green-700' : 'text-yellow-700'}`}>
+          {confirmed
+            ? `Inscription confirmée — ${data.participation_type} • N° ${data.numero_facture}`
+            : `Inscription enregistrée — ${data.participation_type} • En attente de validation du paiement`
+          }
+        </p>
+      </div>
+      {confirmed && (
+        <button
+          onClick={() => openBadgeWindow(data)}
+          className="flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors shrink-0"
+        >
+          <Download className="h-4 w-4" />
+          Mon badge
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -125,6 +244,9 @@ export function DashboardPage() {
           Nouvelle soumission
         </Button>
       </div>
+
+      {/* Badge */}
+      <BadgeSection />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

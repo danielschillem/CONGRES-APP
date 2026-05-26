@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { useAuthStore } from '@/stores/authStore'
+import { authApi } from '@/lib/api'
 
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
@@ -23,6 +26,7 @@ import { AdminBadgesPage } from '@/pages/admin/AdminBadgesPage'
 import { AdminAttestationsPage } from '@/pages/admin/AdminAttestationsPage'
 
 import { InscriptionPage } from '@/pages/InscriptionPage'
+import { User } from '@/types'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +38,24 @@ const queryClient = new QueryClient({
 })
 
 function App() {
+  const [initializing, setInitializing] = useState(true)
+  const { isAuthenticated, setUser, logout } = useAuthStore()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      authApi.me()
+        .then((res) => setUser(res.data.data as User))
+        .catch(() => logout())
+        .finally(() => setInitializing(false))
+    } else {
+      setInitializing(false)
+    }
+  }, [])
+
+  if (initializing) {
+    return null
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

@@ -23,8 +23,11 @@ export function useAuth() {
   }
 
   const logout = async () => {
+    const refreshToken = localStorage.getItem('refresh_token')
     try {
-      await authApi.logout()
+      if (refreshToken) {
+        await authApi.logout(refreshToken)
+      }
     } catch {
       // Ignore errors on logout
     } finally {
@@ -39,7 +42,6 @@ export function useAuth() {
       setUser(response.data.data as User)
     } catch {
       storeLogout()
-      navigate('/login')
     }
   }
 
