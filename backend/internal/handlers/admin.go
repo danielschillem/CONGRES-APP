@@ -600,6 +600,49 @@ func (h *AdminHandler) ExportInscriptionsCSV(c *gin.Context) {
 	}
 }
 
+// ConfirmPayment manually sets an inscription's payment_status to "confirmed".
+func (h *AdminHandler) ConfirmPayment(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid inscription ID")
+		return
+	}
+
+	var inscription models.Inscription
+	if err := h.db.First(&inscription, id).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Inscription not found")
+		return
+	}
+
+	if err := h.db.Model(&inscription).Updates(map[string]interface{}{
+		"payment_status": "confirmed",
+		"transaction_id": fmt.Sprintf("MANUAL-%d", time.Now().UnixNano()),
+	}).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to confirm payment")
+		return
+	}
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[PANIC] ConfirmPayment mail: %v", r)
+			}
+		}()
+		var user models.User
+		if err := h.db.First(&user, "id = ?", inscription.UserID).Error; err == nil && user.Email != "" {
+			h.mail.InscriptionConfirmee(
+				user.Email, user.Prenom, user.Nom,
+				inscription.ParticipationType,
+				inscription.NumeroFacture,
+				fmt.Sprintf("%.0f", inscription.Montant),
+			)
+		}
+	}()
+
+	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Payment confirmed"})
+}
+
 // @Summary     Lister les utilisateurs (admin)
 // @Description Retourne la liste paginée de tous les utilisateurs avec recherche optionnelle
 // @Tags        admin
@@ -678,8 +721,8 @@ func (h *AdminHandler) DeactivateUser(c *gin.Context) {
 		return
 	}
 
-	if user.Role == "admin" {
-		utils.RespondError(c, http.StatusForbidden, "Cannot deactivate an admin account")
+	if user.Role == "super_admin" {
+		utils.RespondError(c, http.StatusForbidden, "Cannot deactivate a super admin account")
 		return
 	}
 

@@ -24,6 +24,9 @@ import { AdminProfilePage } from '@/pages/admin/AdminProfilePage'
 import { AdminFinancesPage } from '@/pages/admin/AdminFinancesPage'
 import { AdminBadgesPage } from '@/pages/admin/AdminBadgesPage'
 import { AdminAttestationsPage } from '@/pages/admin/AdminAttestationsPage'
+import { SuperCongressesPage } from '@/pages/admin/SuperCongressesPage'
+import { AdminCongressSettingsPage } from '@/pages/admin/AdminCongressSettingsPage'
+import { AdminActorsPage } from '@/pages/admin/AdminActorsPage'
 
 import { InscriptionPage } from '@/pages/InscriptionPage'
 import { User } from '@/types'
@@ -78,7 +81,7 @@ function App() {
           </Route>
 
           {/* Admin protected routes */}
-          <Route element={<ProtectedRoute requiredRole="admin" />}>
+          <Route element={<ProtectedRoute requiredRole={['super_admin', 'congress_admin']} />}>
             <Route element={<Layout />}>
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/soumissions" element={<AdminDashboardPage />} />
@@ -88,7 +91,16 @@ function App() {
               <Route path="/admin/finances" element={<AdminFinancesPage />} />
               <Route path="/admin/badges" element={<AdminBadgesPage />} />
               <Route path="/admin/attestations" element={<AdminAttestationsPage />} />
+              <Route path="/admin/congres" element={<AdminCongressSettingsPage />} />
+              <Route path="/admin/acteurs" element={<AdminActorsPage />} />
               <Route path="/admin/profile" element={<AdminProfilePage />} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute requiredRole="super_admin" />}>
+            <Route element={<Layout />}>
+              <Route path="/super/congres" element={<SuperCongressesPage />} />
+              <Route path="/super/acteurs" element={<AdminActorsPage />} />
             </Route>
           </Route>
 

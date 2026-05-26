@@ -99,18 +99,18 @@ func seedAdmin(db *gorm.DB, cfg *config.Config) {
 	if err == nil {
 		if err := db.Model(&existing).Updates(map[string]interface{}{
 			"password": hashedPassword,
-			"role":     "admin",
+			"role":     "super_admin",
 			"active":   true,
 		}).Error; err != nil {
-			log.Printf("Warning: failed to update admin user: %v", err)
+			log.Printf("Warning: failed to update super admin user: %v", err)
 			return
 		}
-		log.Printf("Admin user ready: %s", adminEmail)
+		log.Printf("Super admin user ready: %s", adminEmail)
 		return
 	}
 
 	if err != gorm.ErrRecordNotFound {
-		log.Printf("Warning: could not check for admin user: %v", err)
+		log.Printf("Warning: could not check for super admin user: %v", err)
 		return
 	}
 
@@ -123,7 +123,7 @@ func seedAdmin(db *gorm.DB, cfg *config.Config) {
 		Telephone: "00000000",
 		Email:     adminEmail,
 		Password:  hashedPassword,
-		Role:      "admin",
+		Role:      "super_admin",
 	}
 
 	if err := db.Create(&admin).Error; err != nil {

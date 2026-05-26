@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   RefreshCw,
   ChevronLeft,
@@ -7,6 +7,7 @@ import {
   Users,
   Globe,
   FileDown,
+  CheckCircle2,
 } from 'lucide-react'
 import { adminApi } from '@/lib/api'
 import { Inscription } from '@/types'
@@ -41,9 +42,17 @@ function paymentBadge(status: string) {
 }
 
 export function AdminInscriptionsPage() {
+  const queryClient = useQueryClient()
   const [typeFilter, setTypeFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
   const [page, setPage] = useState(1)
+
+  const confirmMutation = useMutation({
+    mutationFn: (id: number) => adminApi.confirmPayment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inscriptions'] })
+    },
+  })
 
   const queryParams: Record<string, unknown> = { page, limit: PAGE_SIZE }
   if (typeFilter !== 'all') queryParams.participation_type = typeFilter
@@ -147,6 +156,7 @@ export function AdminInscriptionsPage() {
                   <TableHead>Facture</TableHead>
                   <TableHead>Paiement</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,6 +193,25 @@ export function AdminInscriptionsPage() {
                     </TableCell>
                     <TableCell className="text-gray-500 whitespace-nowrap text-sm">
                       {formatDateTime(ins.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {ins.payment_status === 'confirmed' ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Confirmé
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-700 border-green-200 hover:bg-green-50"
+                          loading={confirmMutation.isPending && confirmMutation.variables === ins.id}
+                          onClick={() => confirmMutation.mutate(ins.id)}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                          Confirmer
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

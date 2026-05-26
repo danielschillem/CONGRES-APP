@@ -124,9 +124,25 @@ export function AdminUsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {user.role === 'admin' ? (
+                      {user.role === 'super_admin' ? (
                         <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-                          <Shield className="h-3 w-3" /> Admin
+                          <Shield className="h-3 w-3" /> Super Admin
+                        </Badge>
+                      ) : user.role === 'congress_admin' ? (
+                        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                          <Shield className="h-3 w-3" /> Congrès Admin
+                        </Badge>
+                      ) : user.role === 'reviewer' ? (
+                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                          Reviewer
+                        </Badge>
+                      ) : user.role === 'finance_manager' ? (
+                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                          Finances
+                        </Badge>
+                      ) : user.role === 'support' ? (
+                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                          Support
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="w-fit">Utilisateur</Badge>
@@ -162,7 +178,7 @@ export function AdminUsersPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {user.role !== 'admin' && (
+                      {user.role !== 'super_admin' && (
                         <Button
                           variant={user.active !== false ? "outline" : "default"}
                           size="sm"

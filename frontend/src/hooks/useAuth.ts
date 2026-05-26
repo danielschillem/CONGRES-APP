@@ -15,7 +15,8 @@ export function useAuth() {
     setAuth(user as User, access_token as string, refresh_token as string)
 
     // Redirect based on role
-    if ((user as User).role === 'admin') {
+    const role = (user as User).role
+    if (role === 'super_admin' || role === 'congress_admin') {
       navigate('/admin/dashboard')
     } else {
       navigate('/dashboard')
@@ -52,6 +53,6 @@ export function useAuth() {
     logout,
     refreshUser,
     setUser,
-    isAdmin: user?.role === 'admin',
+    isAdmin: user?.role === 'super_admin' || user?.role === 'congress_admin',
   }
 }

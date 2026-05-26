@@ -114,13 +114,18 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, h.cfg.JWTSecret)
+	congressID := ""
+	if user.CongressID != nil {
+		congressID = user.CongressID.String()
+	}
+
+	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, congressID, h.cfg.JWTSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate access token")
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, h.cfg.JWTRefreshSecret)
+	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, congressID, h.cfg.JWTRefreshSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate refresh token")
 		return
@@ -167,13 +172,18 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, h.cfg.JWTSecret)
+	congressID := ""
+	if user.CongressID != nil {
+		congressID = user.CongressID.String()
+	}
+
+	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, congressID, h.cfg.JWTSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate access token")
 		return
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, h.cfg.JWTRefreshSecret)
+	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, congressID, h.cfg.JWTRefreshSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate refresh token")
 		return
@@ -238,7 +248,12 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	}
 
 	now := time.Now()
-	newRefreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, h.cfg.JWTRefreshSecret)
+	congressID := ""
+	if user.CongressID != nil {
+		congressID = user.CongressID.String()
+	}
+
+	newRefreshToken, err := utils.GenerateRefreshToken(user.ID, user.Role, user.Email, congressID, h.cfg.JWTRefreshSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate refresh token")
 		return
@@ -262,7 +277,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	}
 	tx.Commit()
 
-	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, h.cfg.JWTSecret)
+	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, user.Email, congressID, h.cfg.JWTSecret)
 	if err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate access token")
 		return

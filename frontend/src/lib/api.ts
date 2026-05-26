@@ -220,6 +220,37 @@ export const adminApi = {
 
   exportInscriptionsCSV: (params?: Record<string, unknown>) =>
     api.get('/admin/inscriptions/export/csv', { params, responseType: 'blob' }),
+
+  confirmPayment: (id: number) =>
+    api.patch(`/admin/inscriptions/${id}/confirm-payment`),
+
+  getCurrentCongress: () => api.get('/admin/congress/current'),
+  updateCurrentCongress: (data: object) =>
+    api.patch('/admin/congress/current', data),
+  getActors: (params?: Record<string, unknown>) =>
+    api.get('/admin/congress/actors', { params }),
+  createActor: (data: object, params?: Record<string, unknown>) =>
+    api.post('/admin/congress/actors', data, { params }),
+  deleteActor: (id: string) =>
+    api.delete(`/admin/congress/actors/${id}`),
+  generateBadgesCSV: () =>
+    api.post('/admin/congress/badges', undefined, { responseType: 'blob' }),
+}
+
+// Super admin endpoints
+export const superApi = {
+  getCongresses: (params?: Record<string, unknown>) =>
+    api.get('/super/congresses', { params }),
+  getCongress: (id: string) =>
+    api.get(`/super/congresses/${id}`),
+  createCongress: (data: object) =>
+    api.post('/super/congresses', data),
+  updateCongress: (id: string, data: object) =>
+    api.patch(`/super/congresses/${id}`, data),
+  deleteCongress: (id: string) =>
+    api.delete(`/super/congresses/${id}`),
+  getActors: (params?: Record<string, unknown>) =>
+    api.get('/super/actors', { params }),
 }
 
 // Inscriptions endpoints
@@ -228,4 +259,13 @@ export const inscriptionsApi = {
     api.post('/inscriptions', data),
 
   getMy: () => api.get('/inscriptions/me'),
+
+  downloadReceipt: () =>
+    api.get('/inscriptions/receipt', { responseType: 'blob' }),
+
+  downloadBadge: () =>
+    api.get('/inscriptions/badge', { responseType: 'blob' }),
+
+  downloadAttestation: () =>
+    api.get('/inscriptions/attestation', { responseType: 'blob' }),
 }

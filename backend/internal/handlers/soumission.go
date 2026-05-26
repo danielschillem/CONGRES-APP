@@ -42,7 +42,7 @@ func createAdminNotification(db *gorm.DB, notifType string, soumission *models.S
 		}
 	}()
 	var admins []models.User
-	if err := db.Where("role = ?", "admin").Find(&admins).Error; err != nil {
+	if err := db.Where("role IN ('super_admin', 'congress_admin')").Find(&admins).Error; err != nil {
 		return
 	}
 

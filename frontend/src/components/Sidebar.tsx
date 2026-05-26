@@ -14,6 +14,8 @@ import {
   BadgeCheck,
   Award,
   Bell,
+  CalendarDays,
+  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -71,6 +73,35 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   ]
 
   const adminNavItems: NavItem[] = [
+    ...(user?.role === 'super_admin'
+      ? [
+          {
+            label: 'Congrès',
+            href: '/super/congres',
+            icon: <CalendarDays className="h-4 w-4" />,
+            exact: true,
+          },
+          {
+            label: 'Acteurs',
+            href: '/super/acteurs',
+            icon: <Users className="h-4 w-4" />,
+            exact: true,
+          },
+        ]
+      : [
+          {
+            label: 'Mon congrès',
+            href: '/admin/congres',
+            icon: <Settings className="h-4 w-4" />,
+            exact: true,
+          },
+          {
+            label: 'Acteurs',
+            href: '/admin/acteurs',
+            icon: <Users className="h-4 w-4" />,
+            exact: true,
+          },
+        ]),
     {
       label: 'Tableau de bord',
       href: '/admin/dashboard',

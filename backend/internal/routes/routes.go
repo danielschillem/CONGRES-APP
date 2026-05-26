@@ -33,6 +33,8 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	notificationHandler := handlers.NewNotificationHandler(db)
 	inscriptionHandler := handlers.NewInscriptionHandler(db, cfg, mailService)
 	webhookHandler := handlers.NewWebhookHandler(db, cfg, mailService)
+	congressHandler := handlers.NewCongressHandler(db, cfg)
+	actorHandler := handlers.NewActorHandler(db, cfg)
 
 	api := router.Group("/api")
 
@@ -86,13 +88,46 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		{
 			inscriptions.POST("", inscriptionHandler.CreateInscription)
 			inscriptions.GET("/me", inscriptionHandler.GetMyInscription)
+			inscriptions.GET("/receipt", inscriptionHandler.DownloadReceipt)
+			inscriptions.GET("/badge", inscriptionHandler.DownloadBadge)
+			inscriptions.GET("/attestation", inscriptionHandler.DownloadAttestation)
 		}
 
-		// Admin routes
+		// ─── Super Admin routes ────────────────────────────────────────
+		super := protected.Group("/super")
+		super.Use(middleware.SuperAdminRequired())
+		{
+			// Congress CRUD
+			super.POST("/congresses", congressHandler.CreateCongress)
+			super.GET("/congresses", congressHandler.ListCongresses)
+			super.GET("/congresses/:id", congressHandler.GetCongress)
+			super.PATCH("/congresses/:id", congressHandler.UpdateCongress)
+			super.DELETE("/congresses/:id", congressHandler.DeleteCongress)
+
+			// Actors overview (all congresses)
+			super.GET("/actors", actorHandler.ListActorsForSuperAdmin)
+		}
+
+		// ─── Admin routes (super_admin + congress_admin) ───────────────
 		admin := protected.Group("/admin")
 		admin.Use(middleware.AdminRequired())
 		{
-			// Soumissions management
+			// Congress admin - my congress
+			admin.GET("/congress/current", congressHandler.GetCurrentCongress)
+			admin.PATCH("/congress/current", congressHandler.UpdateCurrentCongress)
+
+			// Actor management
+			admin.POST("/congress/actors", actorHandler.CreateActor)
+			admin.GET("/congress/actors", actorHandler.ListActors)
+			admin.DELETE("/congress/actors/:id", actorHandler.DeleteActor)
+
+			// Badge generation
+			admin.POST("/congress/badges", actorHandler.GenerateBadges)
+
+			// Attestations toggle
+			admin.POST("/congress/toggle-attestations", congressHandler.ToggleAttestations)
+
+			// Legacy admin routes (soumissions, inscriptions, users, stats)
 			adminSoumissions := admin.Group("/soumissions")
 			{
 				adminSoumissions.GET("", adminHandler.ListSoumissions)
@@ -104,11 +139,9 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				adminSoumissions.DELETE("/:id", adminHandler.DeleteSoumission)
 			}
 
-			// Inscriptions management
 			admin.GET("/inscriptions", adminHandler.ListInscriptions)
 			admin.GET("/inscriptions/export/csv", adminHandler.ExportInscriptionsCSV)
-
-			// Stats and users
+			admin.PATCH("/inscriptions/:id/confirm-payment", adminHandler.ConfirmPayment)
 			admin.GET("/stats", adminHandler.GetStats)
 			admin.GET("/users", adminHandler.ListUsers)
 			admin.PATCH("/users/:id/deactivate", adminHandler.DeactivateUser)

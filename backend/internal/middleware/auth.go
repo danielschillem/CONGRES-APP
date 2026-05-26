@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	ContextUserID = "user_id"
-	ContextRole   = "role"
-	ContextEmail  = "email"
+	ContextUserID     = "user_id"
+	ContextRole       = "role"
+	ContextEmail      = "email"
+	ContextCongressID = "congress_id"
 )
 
 func AuthRequired() gin.HandlerFunc {
@@ -49,11 +50,13 @@ func AuthRequired() gin.HandlerFunc {
 		c.Set(ContextUserID, claims.UserID)
 		c.Set(ContextRole, claims.Role)
 		c.Set(ContextEmail, claims.Email)
+		c.Set(ContextCongressID, claims.CongressID)
 
 		c.Next()
 	}
 }
 
+// AdminRequired checks for super_admin or congress_admin role.
 func AdminRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, exists := c.Get(ContextRole)
@@ -63,8 +66,29 @@ func AdminRequired() gin.HandlerFunc {
 			return
 		}
 
-		if role.(string) != "admin" {
+		roleStr := role.(string)
+		if roleStr != "super_admin" && roleStr != "congress_admin" {
 			utils.RespondError(c, http.StatusForbidden, "Admin access required")
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// SuperAdminRequired checks for super_admin role only.
+func SuperAdminRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get(ContextRole)
+		if !exists {
+			utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
+			c.Abort()
+			return
+		}
+
+		if role.(string) != "super_admin" {
+			utils.RespondError(c, http.StatusForbidden, "Super admin access required")
 			c.Abort()
 			return
 		}

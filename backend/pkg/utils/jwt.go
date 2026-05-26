@@ -9,19 +9,21 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
-	Email  string `json:"email"`
-	Type   string `json:"type"` // "access" or "refresh"
+	UserID     string `json:"user_id"`
+	Role       string `json:"role"`
+	Email      string `json:"email"`
+	CongressID string `json:"congress_id,omitempty"`
+	Type       string `json:"type"` // "access" or "refresh"
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userID uuid.UUID, role, email, jwtSecret string) (string, error) {
+func GenerateAccessToken(userID uuid.UUID, role, email, congressID, jwtSecret string) (string, error) {
 	claims := Claims{
-		UserID: userID.String(),
-		Role:   role,
-		Email:  email,
-		Type:   "access",
+		UserID:     userID.String(),
+		Role:       role,
+		Email:      email,
+		CongressID: congressID,
+		Type:       "access",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -32,12 +34,13 @@ func GenerateAccessToken(userID uuid.UUID, role, email, jwtSecret string) (strin
 	return token.SignedString([]byte(jwtSecret))
 }
 
-func GenerateRefreshToken(userID uuid.UUID, role, email, refreshSecret string) (string, error) {
+func GenerateRefreshToken(userID uuid.UUID, role, email, congressID, refreshSecret string) (string, error) {
 	claims := Claims{
-		UserID: userID.String(),
-		Role:   role,
-		Email:  email,
-		Type:   "refresh",
+		UserID:     userID.String(),
+		Role:       role,
+		Email:      email,
+		CongressID: congressID,
+		Type:       "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

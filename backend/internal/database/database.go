@@ -33,6 +33,7 @@ func AutoMigrate(db *gorm.DB) {
 		&models.Inscription{},
 		&models.Notification{},
 		&models.RefreshToken{},
+		&models.Congress{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to auto migrate: %v", err)

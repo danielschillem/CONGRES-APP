@@ -135,7 +135,63 @@ function openBadgeWindow(ins: Inscription) {
   pw.document.close()
 }
 
-function BadgeSection() {
+function openBadgeInNewWindow(html: string) {
+  const pw = window.open('', '_blank', 'width=900,height=700')
+  if (!pw) return
+  pw.document.write(html)
+  pw.document.close()
+}
+
+function openReceiptWindow(ins: Inscription) {
+  const pw = window.open('', '_blank', 'width=600,height=800')
+  if (!pw) return
+  pw.document.write(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head><meta charset="UTF-8"><title>Reçu — ${ins.numero_facture}</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Courier New',monospace;background:#f3f4f6;display:flex;justify-content:center;padding:40px 20px}
+      .receipt{max-width:400px;width:100%;background:white;border:2px solid #d1d5db;border-radius:12px;padding:32px}
+      h1{font-size:18px;text-align:center;margin-bottom:4px;color:#111827}
+      .subtitle{text-align:center;font-size:11px;color:#6b7280;margin-bottom:24px}
+      .header{text-align:center;margin-bottom:24px}
+      .header .amount{font-size:28px;font-weight:bold;color:#059669}
+      .header .label{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+      hr{border:none;border-top:1px dashed #d1d5db;margin:16px 0}
+      .row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+      .row .lbl{color:#6b7280}.row .val{color:#111827;font-weight:500;text-align:right}
+      .status{text-align:center;margin-top:16px;padding:8px;background:#ecfdf5;border-radius:8px;font-size:13px;font-weight:bold;color:#059669}
+      .footer{text-align:center;margin-top:16px;font-size:10px;color:#9ca3af}
+      @media print{body{background:white;padding:0}.receipt{border:none;box-shadow:none}}
+    </style></head>
+    <body>
+    <div class="receipt">
+      <h1>Reçu de paiement</h1>
+      <p class="subtitle">Congrès Scientifique</p>
+      <hr>
+      <div class="header"><p class="label">Montant payé</p><p class="amount">${ins.montant.toLocaleString()} FCFA</p></div>
+      <hr>
+      <div class="row"><span class="lbl">N° Facture</span><span class="val">${ins.numero_facture}</span></div>
+      <div class="row"><span class="lbl">Participant</span><span class="val">${ins.prenom} ${ins.nom}</span></div>
+      <div class="row"><span class="lbl">Email</span><span class="val">${ins.email}</span></div>
+      <div class="row"><span class="lbl">Téléphone</span><span class="val">${ins.telephone}</span></div>
+      <div class="row"><span class="lbl">Type</span><span class="val">${ins.participation_type}</span></div>
+      <div class="row"><span class="lbl">Pays</span><span class="val">${ins.pays}</span></div>
+      <div class="row"><span class="lbl">Organisme</span><span class="val">${ins.organisme ?? '—'}</span></div>
+      <div class="row"><span class="lbl">Méthode</span><span class="val">${ins.methode_paiement}</span></div>
+      <hr>
+      <div class="status">Paiement confirmé</div>
+      <div class="footer">Reçu généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+    </div>
+    <script>window.print()</script>
+    </body>
+    </html>
+  `)
+  pw.document.close()
+}
+
+function InscriptionDocuments() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-inscription'],
     queryFn: async () => {
@@ -150,32 +206,65 @@ function BadgeSection() {
   const confirmed = data.payment_status === 'confirmed'
 
   return (
-    <div className={`rounded-xl border p-5 flex items-start gap-4 ${confirmed ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${confirmed ? 'bg-green-100' : 'bg-yellow-100'}`}>
-        {confirmed
-          ? <BadgeCheck className="h-5 w-5 text-green-700" />
-          : <Clock className="h-5 w-5 text-yellow-700" />
-        }
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={`font-semibold text-sm ${confirmed ? 'text-green-900' : 'text-yellow-900'}`}>
-          {confirmed ? 'Votre badge est disponible' : 'Paiement en attente de confirmation'}
-        </p>
-        <p className={`text-xs mt-0.5 ${confirmed ? 'text-green-700' : 'text-yellow-700'}`}>
+    <div className="space-y-3">
+      {/* Badge section */}
+      <div className={`rounded-xl border p-5 flex items-start gap-4 ${confirmed ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${confirmed ? 'bg-green-100' : 'bg-yellow-100'}`}>
           {confirmed
-            ? `Inscription confirmée — ${data.participation_type} • N° ${data.numero_facture}`
-            : `Inscription enregistrée — ${data.participation_type} • En attente de validation du paiement`
+            ? <BadgeCheck className="h-5 w-5 text-green-700" />
+            : <Clock className="h-5 w-5 text-yellow-700" />
           }
-        </p>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`font-semibold text-sm ${confirmed ? 'text-green-900' : 'text-yellow-900'}`}>
+            {confirmed ? 'Votre badge est disponible' : 'Paiement en attente de confirmation'}
+          </p>
+          <p className={`text-xs mt-0.5 ${confirmed ? 'text-green-700' : 'text-yellow-700'}`}>
+            {confirmed
+              ? `Inscription confirmée — ${data.participation_type} • N° ${data.numero_facture}`
+              : `Inscription enregistrée — ${data.participation_type} • En attente de validation du paiement`
+            }
+          </p>
+        </div>
+        {confirmed && (
+          <button
+            onClick={() => openBadgeWindow(data)}
+            className="flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors shrink-0"
+          >
+            <Download className="h-4 w-4" />
+            Mon badge
+          </button>
+        )}
       </div>
+
+      {/* Receipt + Attestation — only when confirmed */}
       {confirmed && (
-        <button
-          onClick={() => openBadgeWindow(data)}
-          className="flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors shrink-0"
-        >
-          <Download className="h-4 w-4" />
-          Mon badge
-        </button>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Mes documents</h3>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => openReceiptWindow(data)}
+              className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Download className="h-4 w-4 text-primary-600" />
+              Reçu de paiement
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await inscriptionsApi.downloadAttestation()
+                  openBadgeInNewWindow(await res.data.text())
+                } catch {
+                  alert("L'attestation n'est pas encore disponible.")
+                }
+              }}
+              className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Download className="h-4 w-4 text-violet-600" />
+              Attestation
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -245,8 +334,8 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      {/* Badge */}
-      <BadgeSection />
+      {/* Badge + Documents */}
+      <InscriptionDocuments />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

@@ -10,10 +10,67 @@ export interface User {
   organisme?: string;
   biographie?: string;
   email: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'super_admin' | 'congress_admin' | 'reviewer' | 'finance_manager' | 'support';
+  congress_id?: string;
   active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export type CongressStatus = 'draft' | 'active' | 'completed' | 'cancelled';
+
+export interface Congress {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  edition?: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  city?: string;
+  country?: string;
+  organisational_structure?: Record<string, unknown> | null;
+  config?: Record<string, unknown> | null;
+  badge_config?: Record<string, unknown> | null;
+  admin_id?: string;
+  status: CongressStatus;
+  super_admin_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CongressPayload {
+  title: string;
+  subtitle?: string;
+  description?: string;
+  edition?: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  city?: string;
+  country?: string;
+  status?: CongressStatus;
+  organisational_structure?: Record<string, unknown>;
+  config?: Record<string, unknown>;
+  badge_config?: Record<string, unknown>;
+}
+
+export interface CreateCongressResponse {
+  congress: Congress;
+  admin_email: string;
+  admin_password: string;
+}
+
+export interface ActorPayload {
+  civilite: string;
+  nom: string;
+  prenom: string;
+  sexe: string;
+  telephone: string;
+  email: string;
+  password: string;
+  role: 'reviewer' | 'finance_manager' | 'support';
 }
 
 export interface Soumission {

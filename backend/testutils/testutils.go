@@ -68,13 +68,13 @@ func NewTestMailService() *services.MailService {
 
 // GenerateTestAccessToken generates a valid JWT access token using the test secret.
 func GenerateTestAccessToken(userID uuid.UUID, role, email string) string {
-	token, _ := utils.GenerateAccessToken(userID, role, email, TestJWTSecret)
+	token, _ := utils.GenerateAccessToken(userID, role, email, "", TestJWTSecret)
 	return token
 }
 
 // GenerateTestRefreshToken generates a valid JWT refresh token using the test secret.
 func GenerateTestRefreshToken(userID uuid.UUID, role, email string) string {
-	token, _ := utils.GenerateRefreshToken(userID, role, email, TestJWTRefreshSecret)
+	token, _ := utils.GenerateRefreshToken(userID, role, email, "", TestJWTRefreshSecret)
 	return token
 }
 

@@ -16,7 +16,11 @@ const pageTitles: Record<string, string> = {
   '/admin/finances': 'Finances',
   '/admin/badges': 'Badges participants',
   '/admin/attestations': 'Attestations de participation',
+  '/admin/congres': 'Paramètres du congrès',
+  '/admin/acteurs': 'Acteurs du congrès',
   '/admin/profile': 'Mon profil',
+  '/super/congres': 'Gestion des congrès',
+  '/super/acteurs': 'Acteurs tous congrès',
 }
 
 export function Layout() {
