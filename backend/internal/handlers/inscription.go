@@ -476,7 +476,7 @@ func (h *InscriptionHandler) renderReceiptHTML(c *gin.Context, ins *models.Inscr
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Reçu de paiement — %s</title>
+<title>Reçu de paiement - %s</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Courier New', monospace; background: #f3f4f6; display: flex; justify-content: center; padding: 40px 20px; }
@@ -552,7 +552,7 @@ func (h *InscriptionHandler) renderBadgeHTML(c *gin.Context, ins *models.Inscrip
 	congressDates := ""
 	if congress != nil {
 		congressName = congress.Title
-		congressDates = congress.StartDate.Format("02/01/2006") + " – " + congress.EndDate.Format("02/01/2006")
+		congressDates = congress.StartDate.Format("02/01/2006") + " - " + congress.EndDate.Format("02/01/2006")
 		if congress.Location != "" {
 			congressDates += " • " + congress.Location
 		}
@@ -562,7 +562,7 @@ func (h *InscriptionHandler) renderBadgeHTML(c *gin.Context, ins *models.Inscrip
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Mon badge — %s</title>
+<title>Mon badge - %s</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, Helvetica, sans-serif; background: #f3f4f6; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
@@ -639,7 +639,7 @@ func (h *InscriptionHandler) renderAttestationHTML(c *gin.Context, ins *models.I
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Attestation de participation — %s</title>
+<title>Attestation de participation - %s</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Georgia', serif; background: #f3f4f6; display: flex; justify-content: center; padding: 40px 20px; }
@@ -692,7 +692,7 @@ func (h *InscriptionHandler) renderAttestationHTML(c *gin.Context, ins *models.I
       </div>
     </div>
 
-    <div class="footer">Document officiel — %s</div>
+    <div class="footer">Document officiel - %s</div>
     <div class="legal">Attestation générée le %s</div>
   </div>
 </div>

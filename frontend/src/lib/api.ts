@@ -4,6 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -80,9 +81,11 @@ api.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        })
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          { refresh_token: refreshToken },
+          { timeout: 10000 }
+        )
 
         const { access_token, refresh_token } = response.data.data
 
@@ -140,7 +143,7 @@ export const soumissionsApi = {
   getMy: (params?: Record<string, unknown>) =>
     api.get('/soumissions', { params }),
 
-  // Utilisateur — sa propre soumission
+  // Utilisateur - sa propre soumission
   getOne: (id: string) => api.get(`/soumissions/${id}`),
 
   create: (data: FormData) =>
@@ -254,6 +257,9 @@ export const reviewerInvitationApi = {
     api.post('/admin/reviewer-invitations/send-reminders'),
   getReviewersStats: () =>
     api.get('/admin/reviewers/stats'),
+
+  accept: (token: string) =>
+    api.post('/reviewer/invitations/accept', undefined, { params: { token } }),
 }
 
 // Thematic coordinator endpoints

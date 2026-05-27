@@ -257,9 +257,9 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		}
 
 		// Public program routes (authenticated users)
-		protected.GET("/congresses/:congressId/program", programHandler.PublicListProgram)
-		protected.GET("/congresses/:congressId/program/dates", programHandler.PublicListDates)
-		protected.GET("/congresses/:congressId/proceedings", proceedingHandler.PublicListProceedings)
+		protected.GET("/congresses/:id/program", programHandler.PublicListProgram)
+		protected.GET("/congresses/:id/program/dates", programHandler.PublicListDates)
+		protected.GET("/congresses/:id/proceedings", proceedingHandler.PublicListProceedings)
 		protected.GET("/proceedings/:id", proceedingHandler.PublicGetProceeding)
 	}
 }

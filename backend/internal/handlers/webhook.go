@@ -67,7 +67,7 @@ func (h *WebhookHandler) HandleOrangeMoneyNotification(c *gin.Context) {
 		return
 	}
 
-	// Signature validation — compute HMAC over body without the signature field
+	// Signature validation - compute HMAC over body without the signature field
 	payload.Signature = ""
 	cleanBody, _ := json.Marshal(payload)
 	headerSig := c.GetHeader("X-Signature")

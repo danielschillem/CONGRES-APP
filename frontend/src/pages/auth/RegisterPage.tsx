@@ -25,7 +25,7 @@ const registerSchema = z
     sexe: z.string({ required_error: 'Le sexe est requis' }).min(1, 'Le sexe est requis'),
     telephone: z
       .string({ required_error: 'Le téléphone est requis' })
-      .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 — 8 chiffres)'),
+      .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 - 8 chiffres)'),
     email: z.string({ required_error: 'Adresse email invalide' }).email('Adresse email invalide'),
     password: z.string({ required_error: 'Le mot de passe est requis' }).min(8, 'Le mot de passe doit comporter au moins 8 caractères'),
     password_confirmation: z.string({ required_error: 'Veuillez confirmer votre mot de passe' }).min(1, 'Veuillez confirmer votre mot de passe'),

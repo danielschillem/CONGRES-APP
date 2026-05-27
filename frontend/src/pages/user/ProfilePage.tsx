@@ -34,7 +34,7 @@ const profileSchema = z.object({
   sexe: z.string().min(1, 'Le sexe est requis'),
   telephone: z
     .string()
-    .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 — 8 chiffres)'),
+    .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 - 8 chiffres)'),
   email: z.string().email('Adresse email invalide'),
   organisme: z.string().optional(),
   profession: z.string().optional(),

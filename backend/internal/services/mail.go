@@ -20,7 +20,7 @@ func NewMailService(cfg *config.Config) *MailService {
 
 func (s *MailService) Send(to, subject, htmlBody string) error {
 	if s.cfg.SMTPHost == "" {
-		log.Printf("[Mail] SMTP not configured — skipping email to %s (subject: %s)", to, subject)
+		log.Printf("[Mail] SMTP not configured - skipping email to %s (subject: %s)", to, subject)
 		return nil
 	}
 
@@ -126,7 +126,7 @@ func (s *MailService) InscriptionConfirmee(to, prenom, nom, participationType, f
 </table>
 <p>Vous retrouverez tous les détails de votre inscription dans votre espace personnel.</p>
 <p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, prenom, nom, participationType, facture, montant)
-	return s.Send(to, "Inscription confirmée — Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Inscription confirmée - Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) SoumissionApprouvee(to, prenom, nom, titre, dashboardURL string) error {
@@ -137,7 +137,7 @@ func (s *MailService) SoumissionApprouvee(to, prenom, nom, titre, dashboardURL s
 <p>Elle sera présentée lors du congrès selon le programme qui vous sera communiqué ultérieurement.</p>
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Voir ma soumission</a></p>
 <p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, prenom, nom, titre, dashboardURL)
-	return s.Send(to, "Soumission approuvée — Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Soumission approuvée - Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) SoumissionRejetee(to, prenom, nom, titre, raison, dashboardURL string) error {
@@ -152,7 +152,7 @@ func (s *MailService) SoumissionRejetee(to, prenom, nom, titre, raison, dashboar
 <p>Vous pouvez consulter les détails et soumettre une nouvelle proposition dans votre espace personnel.</p>
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Voir les détails</a></p>
 <p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, prenom, nom, titre, raison, dashboardURL)
-	return s.Send(to, "Soumission non retenue — Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Soumission non retenue - Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) NouvelleSoumissionAdmin(to, prenom, nom, titre, auteur, adminURL string) error {
@@ -166,7 +166,7 @@ func (s *MailService) NouvelleSoumissionAdmin(to, prenom, nom, titre, auteur, ad
 </table>
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Examiner la soumission</a></p>
 <p style="color:#666;font-size:13px">Ceci est un message automatique.</p>`, prenom, nom, titre, auteur, adminURL)
-	return s.Send(to, "Nouvelle soumission — Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Nouvelle soumission - Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) SoumissionModifieeAdmin(to, prenom, nom, titre, auteur, adminURL string) error {
@@ -176,7 +176,7 @@ func (s *MailService) SoumissionModifieeAdmin(to, prenom, nom, titre, auteur, ad
 <p>La soumission <strong>«&nbsp;%s&nbsp;»</strong> de %s a été modifiée.</p>
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Voir les modifications</a></p>
 <p style="color:#666;font-size:13px">Ceci est un message automatique.</p>`, prenom, nom, titre, auteur, adminURL)
-	return s.Send(to, "Soumission modifiée — Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Soumission modifiée - Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) ReviewerInvitation(to, prenom, nom, congressTitle, acceptURL, message string) error {
@@ -203,7 +203,7 @@ func (s *MailService) ReviewerInvitation(to, prenom, nom, congressTitle, acceptU
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Accepter l'invitation</a></p>
 <p style="color:#666;font-size:13px">Ce lien est valable 14 jours. Si vous avez déjà un compte, vous serez automatiquement redirigé après connexion.</p>
 <p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, greeting, congressTitle, msgBlock, acceptURL)
-	return s.Send(to, "Invitation au comité de relecture — Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Invitation au comité de relecture - Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) ReviewerWelcome(to, prenom, nom, tempPassword, loginURL string) error {
@@ -219,18 +219,18 @@ func (s *MailService) ReviewerWelcome(to, prenom, nom, tempPassword, loginURL st
 <p style="color:#dc2626;font-size:13px">Veuillez changer votre mot de passe après votre première connexion.</p>
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Se connecter</a></p>
 <p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, prenom, nom, to, tempPassword, loginURL)
-	return s.Send(to, "Bienvenue — Relecteur Congrès Scientifique", s.layout(body))
+	return s.Send(to, "Bienvenue - Relecteur Congrès Scientifique", s.layout(body))
 }
 
 func (s *MailService) ReviewReminder(to, name string, pendingCount int, dashboardURL string) error {
 	body := fmt.Sprintf(`
-<h2 style="color:#1a1a2e;margin:0 0 20px">Relance — Évaluations en attente</h2>
+<h2 style="color:#1a1a2e;margin:0 0 20px">Relance - Évaluations en attente</h2>
 <p>Bonjour <strong>%s</strong>,</p>
 <p>Vous avez actuellement <strong style="color:#dc2626">%d évaluation(s)</strong> en attente de votre part sur la plateforme de soumission.</p>
 <p>Nous vous remercions de bien vouloir finaliser vos évaluations dans les meilleurs délais afin de permettre la clôture du processus de relecture.</p>
 <p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Voir mes évaluations</a></p>
 <p style="color:#666;font-size:13px">Ceci est un message automatique de relance.</p>`, name, pendingCount, dashboardURL)
-	return s.Send(to, "Relance — Évaluations en attente", s.layout(body))
+	return s.Send(to, "Relance - Évaluations en attente", s.layout(body))
 }
 
 func (s *MailService) BroadcastMessage(to, prenom, nom, subject, bodyText, notificationsURL string) error {

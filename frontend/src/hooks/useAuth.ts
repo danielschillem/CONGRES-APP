@@ -18,6 +18,8 @@ export function useAuth() {
     const role = (user as User).role
     if (role === 'super_admin' || role === 'congress_admin') {
       navigate('/admin/dashboard')
+    } else if (role === 'reviewer') {
+      navigate('/reviewer/dashboard')
     } else {
       navigate('/dashboard')
     }

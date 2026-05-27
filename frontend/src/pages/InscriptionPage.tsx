@@ -27,7 +27,7 @@ const inscriptionSchema = z.object({
   email: z.string().email('Adresse email invalide'),
   telephone: z
     .string()
-    .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 — 8 chiffres)'),
+    .regex(/^[05-7]\d{7}$/, 'Numéro invalide (commence par 0, 5, 6 ou 7 - 8 chiffres)'),
   organisme: z.string().optional(),
   pays: z.string().min(2, 'Le pays est requis'),
   tariff_label: z.string().min(1, 'Veuillez sélectionner un tarif'),

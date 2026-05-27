@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
+import type { AxiosResponse } from 'axios'
 
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -11,6 +13,8 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { HomePage } from '@/pages/HomePage'
 import { CongressDetailPage } from '@/pages/CongressDetailPage'
+import { PublicProgramPage } from '@/pages/PublicProgramPage'
+import { PublicProceedingsPage } from '@/pages/PublicProceedingsPage'
 
 import { DashboardPage } from '@/pages/user/DashboardPage'
 import { SoumissionFormPage } from '@/pages/user/SoumissionFormPage'
@@ -39,6 +43,7 @@ import { VirtualRoom } from '@/pages/VirtualRoom'
 import { VirtualSessionsPage } from '@/pages/user/VirtualSessionsPage'
 import { AdminVirtualSessions } from '@/pages/admin/AdminVirtualSessions'
 import { ReviewerDashboardPage } from '@/pages/reviewer/ReviewerDashboardPage'
+import { ReviewerInvitationAcceptPage } from '@/pages/reviewer/ReviewerInvitationAcceptPage'
 import { AdminProgramPage } from '@/pages/admin/AdminProgramPage'
 import { AdminProceedingsPage } from '@/pages/admin/AdminProceedingsPage'
 import { User } from '@/types'
@@ -57,18 +62,41 @@ function App() {
   const { isAuthenticated, setUser, logout } = useAuthStore()
 
   useEffect(() => {
+    let mounted = true
+
     if (isAuthenticated) {
-      authApi.me()
+      Promise.race<AxiosResponse>([
+        authApi.me(),
+        new Promise((_, reject) => {
+          window.setTimeout(() => reject(new Error('Session initialization timeout')), 10000)
+        }),
+      ])
         .then((res) => setUser(res.data.data as User))
         .catch(() => logout())
-        .finally(() => setInitializing(false))
+        .finally(() => {
+          if (mounted) setInitializing(false)
+        })
     } else {
       setInitializing(false)
+    }
+
+    return () => {
+      mounted = false
     }
   }, [])
 
   if (initializing) {
-    return null
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-ink-950 text-white">
+        <div className="flex flex-col items-center gap-4 rounded-lg border border-white/10 bg-white/10 px-8 py-7 text-center shadow-2xl backdrop-blur">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-200" />
+          <div>
+            <p className="font-semibold">Initialisation de la plateforme</p>
+            <p className="mt-1 text-sm text-ink-300">Vérification de la session en cours...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -78,6 +106,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/reviewer/invitations/accept" element={<ReviewerInvitationAcceptPage />} />
 
           {/* User protected routes */}
           <Route element={<ProtectedRoute requiredRole="user" />}>
@@ -135,6 +164,8 @@ function App() {
           {/* Public pages */}
           <Route path="/" element={<HomePage />} />
           <Route path="/congress/:id" element={<CongressDetailPage />} />
+          <Route path="/congress/:id/program" element={<PublicProgramPage />} />
+          <Route path="/congress/:id/proceedings" element={<PublicProceedingsPage />} />
 
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/login" replace />} />

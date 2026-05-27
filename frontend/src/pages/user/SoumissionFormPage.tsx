@@ -377,7 +377,7 @@ export function SoumissionFormPage() {
                   <p className="text-sm font-medium text-gray-700">
                     Glissez votre fichier ici ou cliquez pour parcourir
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">PDF uniquement — max 50 Mo</p>
+                  <p className="text-xs text-gray-400 mt-1">PDF uniquement - max 50 Mo</p>
                 </div>
               )}
               <input

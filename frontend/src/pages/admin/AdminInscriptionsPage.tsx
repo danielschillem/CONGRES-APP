@@ -221,7 +221,7 @@ export function AdminInscriptionsPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
               <p className="text-sm text-gray-500">
-                {total} résultat{total !== 1 ? 's' : ''} — Page {page} / {totalPages}
+                {total} résultat{total !== 1 ? 's' : ''} - Page {page} / {totalPages}
               </p>
               <div className="flex items-center gap-1">
                 <Button

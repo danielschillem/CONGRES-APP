@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { BookOpen, Plus, Trash2, Send } from 'lucide-react'
 import type { Proceeding, ProceedingDetail, Soumission } from '@/types'
+import { EmptyState, LoadingState, PageHeader } from '@/components/Interface'
 
 export function AdminProceedingsPage() {
   const queryClient = useQueryClient()
@@ -102,8 +103,11 @@ export function AdminProceedingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Actes du congrès</h1>
+      <PageHeader
+        eyebrow="Publication scientifique"
+        title="Actes du congrès"
+        description="Composez les volumes d'actes, ajoutez les communications validées et publiez les contenus accessibles au public."
+        actions={
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -135,17 +139,17 @@ export function AdminProceedingsPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+        }
+      />
 
       {isLoading ? (
-        <p className="text-gray-500">Chargement...</p>
+        <LoadingState />
       ) : proceedings.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-gray-500">
-            <BookOpen className="mx-auto h-12 w-12 mb-4 opacity-40" />
-            <p>Aucun acte créé</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<BookOpen className="h-7 w-7" />}
+          title="Aucun acte créé"
+          description="Créez un premier volume pour préparer la publication des communications acceptées."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {proceedings.map((p) => (

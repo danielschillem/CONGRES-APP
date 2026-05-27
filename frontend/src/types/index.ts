@@ -100,6 +100,10 @@ export interface Notification {
     message: string;
     soumission_id?: string;
     soumission_title?: string;
+    broadcast_id?: string;
+    broadcast_subject?: string;
+    invitation_id?: string;
+    invitation_email?: string;
     raison?: string;
   };
   read_at?: string;

@@ -17,6 +17,9 @@ function NotificationRow({
     soumission_approved: 'Soumission approuvée',
     soumission_rejected: 'Soumission rejetée',
     soumission_received: 'Soumission reçue',
+    broadcast: 'Diffusion officielle',
+    invitation_accepted: 'Invitation relecteur',
+    review_assigned: 'Évaluation assignée',
   }
 
   return (
@@ -45,6 +48,12 @@ function NotificationRow({
         </p>
         {notification.data.soumission_title && (
           <p className="text-xs text-gray-500 mt-1">{notification.data.soumission_title}</p>
+        )}
+        {notification.data.broadcast_subject && (
+          <p className="text-xs text-gray-500 mt-1">{notification.data.broadcast_subject}</p>
+        )}
+        {notification.data.invitation_email && (
+          <p className="text-xs text-gray-500 mt-1">{notification.data.invitation_email}</p>
         )}
         {notification.data.raison && (
           <p className="text-xs text-gray-500 mt-1">Raison : {notification.data.raison}</p>

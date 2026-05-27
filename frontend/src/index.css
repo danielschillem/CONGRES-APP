@@ -8,7 +8,7 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply bg-ink-50 text-ink-900 font-sans;
     font-feature-settings: "cv11", "ss01";
     font-variation-settings: "opsz" auto;
   }
@@ -19,6 +19,26 @@
 }
 
 @layer utilities {
+  .app-surface {
+    @apply rounded-lg border border-ink-200 bg-white shadow-sm;
+  }
+
+  .app-panel {
+    @apply rounded-lg border border-ink-200 bg-white;
+  }
+
+  .page-kicker {
+    @apply text-xs font-semibold uppercase tracking-wide text-primary-700;
+  }
+
+  .hero-media {
+    background-image:
+      linear-gradient(110deg, rgba(8, 51, 68, 0.92), rgba(14, 116, 144, 0.78)),
+      url("https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=1800&q=80");
+    background-size: cover;
+    background-position: center;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: theme('colors.gray.300') transparent;

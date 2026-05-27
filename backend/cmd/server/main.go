@@ -55,7 +55,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
-	// Trust proxies — default to private ranges, configurable via TRUSTED_PROXIES
+	// Trust proxies - default to private ranges, configurable via TRUSTED_PROXIES
 	trustedProxies := os.Getenv("TRUSTED_PROXIES")
 	if trustedProxies == "" {
 		trustedProxies = "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"

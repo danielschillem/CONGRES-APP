@@ -362,7 +362,7 @@ export function AdminDashboardPage() {
         />
       </div>
 
-      {/* Stats — Soumissions */}
+      {/* Stats - Soumissions */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard
           title="Total"
@@ -402,7 +402,7 @@ export function AdminDashboardPage() {
         />
       </div>
 
-      {/* Stats — Inscriptions */}
+      {/* Stats - Inscriptions */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard
           title="Inscriptions"
@@ -489,7 +489,7 @@ export function AdminDashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-gray-700">
-              Inscriptions — statut paiement
+              Inscriptions - statut paiement
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -669,7 +669,7 @@ export function AdminDashboardPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
               <p className="text-sm text-gray-500">
-                {total} résultat{total !== 1 ? 's' : ''} — Page {page} / {totalPages}
+                {total} résultat{total !== 1 ? 's' : ''} - Page {page} / {totalPages}
               </p>
               <div className="flex items-center gap-1">
                 <Button

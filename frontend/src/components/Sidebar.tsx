@@ -1,32 +1,33 @@
+import type { ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard,
-  FilePlus,
-  UserCircle,
-  LogOut,
+  Award,
+  BadgeCheck,
+  Bell,
+  BookOpen,
+  CalendarDays,
+  CalendarRange,
+  CheckCircle2,
   ClipboardList,
   Clock,
-  CheckCircle2,
-  XCircle,
-  Users,
-  X,
   DollarSign,
-  BadgeCheck,
-  Award,
-  Bell,
-  CalendarDays,
-  Settings,
-  Video,
-  BookOpen,
-  CalendarRange,
-  Star,
+  FilePlus,
+  LayoutDashboard,
   ListChecks,
+  LogOut,
   Mail,
   Megaphone,
+  Settings,
+  Star,
+  UserCircle,
+  Users,
+  Video,
+  X,
+  XCircle,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/hooks/useAuth'
+import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   open: boolean
@@ -36,295 +37,206 @@ interface SidebarProps {
 interface NavItem {
   label: string
   href: string
-  icon: React.ReactNode
+  icon: ReactNode
   exact?: boolean
+}
+
+interface NavSection {
+  title?: string
+  items: NavItem[]
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const isReviewer = user?.role === 'reviewer'
 
   const handleLogout = async () => {
     await logout()
     navigate('/login')
   }
 
-  const userNavItems: NavItem[] = [
+  const userNavSections: NavSection[] = [
     {
-      label: 'Tableau de bord',
-      href: '/dashboard',
-      icon: <LayoutDashboard className="h-4 w-4" />,
-      exact: true,
-    },
-    {
-      label: 'Nouvelle soumission',
-      href: '/soumission/nouveau',
-      icon: <FilePlus className="h-4 w-4" />,
-    },
-    {
-      label: 'Inscription',
-      href: '/inscription',
-      icon: <Users className="h-4 w-4" />,
-    },
-    {
-      label: 'Sessions virtuelles',
-      href: '/virtual/sessions',
-      icon: <Video className="h-4 w-4" />,
-    },
-    {
-      label: 'Notifications',
-      href: '/notifications',
-      icon: <Bell className="h-4 w-4" />,
-    },
-    {
-      label: 'Mon profil',
-      href: '/profile',
-      icon: <UserCircle className="h-4 w-4" />,
+      items: [
+        { label: 'Tableau de bord', href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+        { label: 'Nouvelle soumission', href: '/soumission/nouveau', icon: <FilePlus className="h-4 w-4" /> },
+        { label: 'Inscription', href: '/inscription', icon: <Users className="h-4 w-4" /> },
+        { label: 'Sessions virtuelles', href: '/virtual/sessions', icon: <Video className="h-4 w-4" /> },
+        { label: 'Notifications', href: '/notifications', icon: <Bell className="h-4 w-4" /> },
+        { label: 'Mon profil', href: '/profile', icon: <UserCircle className="h-4 w-4" /> },
+      ],
     },
   ]
 
-  const adminNavItems: NavItem[] = [
-    ...(user?.role === 'super_admin'
-      ? [
-          {
-            label: 'Congrès',
-            href: '/super/congres',
-            icon: <CalendarDays className="h-4 w-4" />,
-            exact: true,
-          },
-          {
-            label: 'Acteurs',
-            href: '/super/acteurs',
-            icon: <Users className="h-4 w-4" />,
-            exact: true,
-          },
-        ]
-      : [
-          {
-            label: 'Mon congrès',
-            href: '/admin/congres',
-            icon: <Settings className="h-4 w-4" />,
-            exact: true,
-          },
-          {
-            label: 'Acteurs',
-            href: '/admin/acteurs',
-            icon: <Users className="h-4 w-4" />,
-            exact: true,
-          },
-        ]),
+  const reviewerNavSections: NavSection[] = [
     {
-      label: 'Tableau de bord',
-      href: '/admin/dashboard',
-      icon: <LayoutDashboard className="h-4 w-4" />,
-      exact: true,
-    },
-    {
-      label: 'Toutes les soumissions',
-      href: '/admin/soumissions',
-      icon: <ClipboardList className="h-4 w-4" />,
-    },
-    {
-      label: 'Inscriptions',
-      href: '/admin/inscriptions',
-      icon: <Users className="h-4 w-4" />,
-    },
-    {
-      label: 'En attente',
-      href: '/admin/soumissions?statut=En+attente',
-      icon: <Clock className="h-4 w-4" />,
-    },
-    {
-      label: 'Approuvées',
-      href: '/admin/soumissions?statut=Approuv%C3%A9e',
-      icon: <CheckCircle2 className="h-4 w-4" />,
-    },
-    {
-      label: 'Rejetées',
-      href: '/admin/soumissions?statut=Rejet%C3%A9e',
-      icon: <XCircle className="h-4 w-4" />,
-    },
-    {
-      label: 'Utilisateurs',
-      href: '/admin/utilisateurs',
-      icon: <Users className="h-4 w-4" />,
-    },
-    {
-      label: 'Finances',
-      href: '/admin/finances',
-      icon: <DollarSign className="h-4 w-4" />,
-    },
-    {
-      label: 'Badges',
-      href: '/admin/badges',
-      icon: <BadgeCheck className="h-4 w-4" />,
-    },
-    {
-      label: 'Programmation',
-      href: '/admin/program',
-      icon: <CalendarRange className="h-4 w-4" />,
-    },
-    {
-      label: 'Actes',
-      href: '/admin/actes',
-      icon: <BookOpen className="h-4 w-4" />,
-    },
-    {
-      label: 'Sessions virtuelles',
-      href: '/admin/virtual/sessions',
-      icon: <Video className="h-4 w-4" />,
-    },
-    {
-      label: 'Grilles de relecture',
-      href: '/admin/grilles-relecture',
-      icon: <ListChecks className="h-4 w-4" />,
-    },
-    {
-      label: 'Gestion des relecteurs',
-      href: '/admin/invitations-relecteurs',
-      icon: <Mail className="h-4 w-4" />,
-    },
-    {
-      label: 'Diffusion',
-      href: '/admin/diffusion',
-      icon: <Megaphone className="h-4 w-4" />,
-    },
-    {
-      label: 'Attestations',
-      href: '/admin/attestations',
-      icon: <Award className="h-4 w-4" />,
-    },
-    {
-      label: 'Mon profil',
-      href: '/admin/profile',
-      icon: <UserCircle className="h-4 w-4" />,
+      items: [
+        { label: 'Mes évaluations', href: '/reviewer/dashboard', icon: <Star className="h-4 w-4" />, exact: true },
+        { label: 'Notifications', href: '/notifications', icon: <Bell className="h-4 w-4" /> },
+        { label: 'Mon profil', href: '/profile', icon: <UserCircle className="h-4 w-4" /> },
+      ],
     },
   ]
 
-  const isReviewer = user?.role === 'reviewer'
-
-  const reviewerNavItems: NavItem[] = [
+  const adminNavSections: NavSection[] = [
     {
-      label: 'Évaluations',
-      href: '/reviewer/dashboard',
-      icon: <Star className="h-4 w-4" />,
-      exact: true,
+      title: "Vue d'ensemble",
+      items: [
+        ...(user?.role === 'super_admin'
+          ? [
+              { label: 'Congrès', href: '/super/congres', icon: <CalendarDays className="h-4 w-4" />, exact: true },
+              { label: 'Acteurs', href: '/super/acteurs', icon: <Users className="h-4 w-4" />, exact: true },
+            ]
+          : [
+              { label: 'Mon congrès', href: '/admin/congres', icon: <Settings className="h-4 w-4" />, exact: true },
+              { label: 'Acteurs', href: '/admin/acteurs', icon: <Users className="h-4 w-4" />, exact: true },
+            ]),
+        { label: 'Tableau de bord', href: '/admin/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, exact: true },
+      ],
     },
     {
-      label: 'Notifications',
-      href: '/notifications',
-      icon: <Bell className="h-4 w-4" />,
+      title: 'Soumissions & évaluation',
+      items: [
+        { label: 'Toutes les soumissions', href: '/admin/soumissions', icon: <ClipboardList className="h-4 w-4" /> },
+        { label: 'En attente', href: '/admin/soumissions?statut=En+attente', icon: <Clock className="h-4 w-4" /> },
+        { label: 'Approuvées', href: '/admin/soumissions?statut=Approuv%C3%A9e', icon: <CheckCircle2 className="h-4 w-4" /> },
+        { label: 'Rejetées', href: '/admin/soumissions?statut=Rejet%C3%A9e', icon: <XCircle className="h-4 w-4" /> },
+        { label: 'Relecteurs', href: '/admin/invitations-relecteurs', icon: <Mail className="h-4 w-4" /> },
+        { label: "Grilles d'évaluation", href: '/admin/grilles-relecture', icon: <ListChecks className="h-4 w-4" /> },
+      ],
     },
     {
-      label: 'Mon profil',
-      href: '/profile',
-      icon: <UserCircle className="h-4 w-4" />,
+      title: 'Participants & finances',
+      items: [
+        { label: 'Inscriptions', href: '/admin/inscriptions', icon: <Users className="h-4 w-4" /> },
+        { label: 'Utilisateurs', href: '/admin/utilisateurs', icon: <Users className="h-4 w-4" /> },
+        { label: 'Finances', href: '/admin/finances', icon: <DollarSign className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: 'Programme & contenu',
+      items: [
+        { label: 'Programmation', href: '/admin/program', icon: <CalendarRange className="h-4 w-4" /> },
+        { label: 'Actes du congrès', href: '/admin/actes', icon: <BookOpen className="h-4 w-4" /> },
+        { label: 'Diffusion', href: '/admin/diffusion', icon: <Megaphone className="h-4 w-4" /> },
+        { label: 'Sessions virtuelles', href: '/admin/virtual/sessions', icon: <Video className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: 'Documents',
+      items: [
+        { label: 'Badges', href: '/admin/badges', icon: <BadgeCheck className="h-4 w-4" /> },
+        { label: 'Attestations', href: '/admin/attestations', icon: <Award className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: 'Compte',
+      items: [{ label: 'Mon profil', href: '/admin/profile', icon: <UserCircle className="h-4 w-4" /> }],
     },
   ]
 
-  const navItems = isReviewer ? reviewerNavItems : isAdmin ? adminNavItems : userNavItems
+  const navSections = isAdmin ? adminNavSections : isReviewer ? reviewerNavSections : userNavSections
 
   const isNavItemActive = (item: NavItem) => {
     const itemUrl = new URL(item.href, window.location.origin)
     const itemStatut = itemUrl.searchParams.get('statut')
     const currentStatut = new URLSearchParams(location.search).get('statut')
-
-    if (location.pathname !== itemUrl.pathname) {
-      return false
-    }
-
+    if (location.pathname !== itemUrl.pathname) return false
     if (itemUrl.pathname === '/admin/soumissions') {
       return itemStatut ? currentStatut === itemStatut : currentStatut === null
     }
-
     return item.exact ? location.pathname === itemUrl.pathname : true
   }
 
   return (
     <>
-      {/* Mobile overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {open && <div className="fixed inset-0 z-20 bg-ink-950/45 lg:hidden" onClick={onClose} />}
 
-      {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-30 flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-lg transition-transform duration-300 lg:relative lg:translate-x-0 lg:shadow-none',
+          'fixed left-0 top-0 z-30 flex h-full w-72 flex-col border-r border-ink-800 bg-ink-950 text-white shadow-xl transition-transform duration-300 lg:relative lg:translate-x-0 lg:shadow-none',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Logo / Brand */}
-        <div className="flex h-16 items-center justify-between px-5 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-sm">
+        <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-400 text-sm font-bold text-ink-950">
               CS
             </div>
-            <span className="font-semibold text-gray-900 text-sm">Congrès Sci.</span>
+            <div>
+              <span className="block text-sm font-semibold">Congrès Sci.</span>
+              <span className="text-xs text-ink-400">Pilotage scientifique</span>
+            </div>
           </div>
           <button
             type="button"
             title="Fermer le menu"
             onClick={onClose}
-            className="lg:hidden rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            className="rounded-md p-1 text-ink-400 hover:bg-white/10 hover:text-white lg:hidden"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* User info */}
-        <div className="px-4 py-4 border-b border-gray-100">
+        <div className="border-b border-white/10 px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-semibold text-sm shrink-0">
-              {user?.prenom?.[0]?.toUpperCase()}{user?.nom?.[0]?.toUpperCase()}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-primary-100">
+              {user?.prenom?.[0]?.toUpperCase()}
+              {user?.nom?.[0]?.toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="truncate text-sm font-medium text-white">
                 {user?.civilite} {user?.prenom} {user?.nom}
               </p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              <p className="truncate text-xs text-ink-400">{user?.email}</p>
             </div>
           </div>
-          {isAdmin && (
-            <span className="mt-2 inline-flex items-center rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-semibold text-primary-700">
-              Administrateur
+          {(isAdmin || isReviewer) && (
+            <span className="mt-3 inline-flex items-center rounded-md border border-primary-300/30 bg-primary-300/10 px-2 py-1 text-xs font-medium text-primary-100">
+              {isAdmin ? 'Administrateur' : 'Relecteur'}
             </span>
           )}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-          {navItems.map((item) => {
-            const isActive = isNavItemActive(item)
-
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={onClose}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary-50 text-primary-700 border border-primary-100'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                )}
-              >
-                <span className="shrink-0">{item.icon}</span>
-                {item.label}
-              </Link>
-            )
-          })}
+        <nav className="scrollbar-thin flex-1 space-y-5 overflow-y-auto px-3 py-4">
+          {navSections.map((section, sectionIndex) => (
+            <div key={sectionIndex}>
+              {section.title && (
+                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-ink-500">
+                  {section.title}
+                </p>
+              )}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = isNavItemActive(item)
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
+                        isActive
+                          ? 'bg-primary-400 text-ink-950 shadow-sm'
+                          : 'text-ink-300 hover:bg-white/10 hover:text-white'
+                      )}
+                    >
+                      <span className="shrink-0">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-gray-100">
+        <div className="border-t border-white/10 px-3 py-4">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="w-full justify-start gap-3 text-red-200 hover:bg-red-500/10 hover:text-red-100"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />

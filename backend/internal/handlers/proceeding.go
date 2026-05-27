@@ -308,7 +308,7 @@ func (h *ProceedingHandler) AdminRemoveSubmission(c *gin.Context) {
 
 // PublicListProceedings lists published proceedings for a congress.
 func (h *ProceedingHandler) PublicListProceedings(c *gin.Context) {
-	congressID, err := uuid.Parse(c.Param("congressId"))
+	congressID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "Invalid congress ID")
 		return

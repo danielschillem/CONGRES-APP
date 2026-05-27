@@ -309,7 +309,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	if err := h.db.Model(&models.RefreshToken{}).
 		Where("token = ? AND revoked_at IS NULL", req.RefreshToken).
 		Update("revoked_at", &now).Error; err != nil {
-		// Log but don't fail — best-effort revocation
+		// Log but don't fail - best-effort revocation
 		log.Printf("[Auth] Failed to revoke refresh token on logout: %v", err)
 	}
 

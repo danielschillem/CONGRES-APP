@@ -101,7 +101,7 @@ function SessionCard({ session }: { session: VirtualSession }) {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
-                {' – '}
+                {' - '}
                 {new Date(session.end_time).toLocaleTimeString('fr-FR', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -186,7 +186,7 @@ export function VirtualSessionsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Sessions virtuelles</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {user?.prenom ? `Bonjour ${user.prenom} — ` : ''}
+            {user?.prenom ? `Bonjour ${user.prenom} - ` : ''}
             Vos sessions planifiées et passées
           </p>
         </div>

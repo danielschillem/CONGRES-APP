@@ -12,6 +12,7 @@ import {
   AlertCircle,
   LogIn,
   Video,
+  CalendarRange,
 } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { congressesApi } from '@/lib/api'
@@ -131,6 +132,18 @@ function ActionSection({
             </Link>
           </Button>
         )}
+        <Button size="lg" variant="outline" className="min-w-[220px] gap-2 bg-white" asChild>
+          <Link to={`/congress/${congress.id}/program`}>
+            <CalendarRange className="h-5 w-5" />
+            Voir le programme
+          </Link>
+        </Button>
+        <Button size="lg" variant="outline" className="min-w-[220px] gap-2 bg-white" asChild>
+          <Link to={`/congress/${congress.id}/proceedings`}>
+            <BookOpen className="h-5 w-5" />
+            Actes publiés
+          </Link>
+        </Button>
       </div>
 
       {!isAuthenticated && submissionOpen && (
@@ -243,7 +256,7 @@ export function CongressDetailPage() {
       </header>
 
       {/* Hero */}
-      <div className="bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 text-white">
+      <div className="hero-media text-white">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Badge variant="success" className="text-sm px-3 py-1">
@@ -264,7 +277,7 @@ export function CongressDetailPage() {
               >
                 <Clock className="h-3.5 w-3.5 inline mr-1" />
                 {inscriptionDays <= 30
-                  ? `Inscriptions — ${inscriptionDays}j restants`
+                  ? `Inscriptions - ${inscriptionDays}j restants`
                   : 'Inscriptions ouvertes'}
               </span>
             )}

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, Trash2, Edit3, Clock, MapPin } from 'lucide-react'
 import type { ProgramSlot, Soumission } from '@/types'
+import { EmptyState, LoadingState, PageHeader } from '@/components/Interface'
 
 const sessionTypeLabels: Record<string, string> = {
   plenary: 'Plénière',
@@ -53,7 +54,7 @@ function SlotFormDialog({
   const [endTime, setEndTime] = useState(slot?.end_time ?? '')
   const [location, setLocation] = useState(slot?.location ?? '')
   const [sessionType, setSessionType] = useState<string>(slot?.session_type ?? 'presentation')
-  const [soumissionId, setSoumissionId] = useState(slot?.soumission_id ?? '')
+  const [soumissionId, setSoumissionId] = useState(slot?.soumission_id ?? 'none')
   const [order, setOrder] = useState(slot?.order ?? 0)
 
   const { data: availableData } = useQuery({
@@ -81,7 +82,7 @@ function SlotFormDialog({
       end_time: endTime,
       location,
       session_type: sessionType,
-      soumission_id: soumissionId || undefined,
+      soumission_id: soumissionId === 'none' ? undefined : soumissionId,
       order,
     })
   }
@@ -139,7 +140,7 @@ function SlotFormDialog({
                 <SelectValue placeholder="Aucune" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune</SelectItem>
+                <SelectItem value="none">Aucune</SelectItem>
                 {availableSoumissions.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.document_title} - {s.author_name}
@@ -199,13 +200,17 @@ export function AdminProgramPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Programmation</h1>
+      <PageHeader
+        eyebrow="Programme scientifique"
+        title="Programmation"
+        description="Structurez les sessions, associez les communications acceptées et publiez un agenda lisible pour les participants."
+        actions={
         <Button onClick={() => { setEditingSlot(null); setDialogOpen(true) }}>
           <Plus className="h-4 w-4 mr-1" />
           Nouveau créneau
         </Button>
-      </div>
+        }
+      />
 
       {dates.length > 0 && (
         <div className="flex gap-2 flex-wrap">
@@ -230,14 +235,13 @@ export function AdminProgramPage() {
       )}
 
       {isLoading ? (
-        <p className="text-gray-500">Chargement...</p>
+        <LoadingState />
       ) : filteredSlots.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-gray-500">
-            <Clock className="mx-auto h-12 w-12 mb-4 opacity-40" />
-            <p>Aucun créneau programmé</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<Clock className="h-7 w-7" />}
+          title="Aucun créneau programmé"
+          description="Créez les premières sessions pour construire l'agenda public du congrès."
+        />
       ) : (
         <div className="space-y-3">
           {filteredSlots.map((slot) => (

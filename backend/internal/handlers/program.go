@@ -287,7 +287,7 @@ func (h *ProgramHandler) ListAvailableSoumissions(c *gin.Context) {
 
 // PublicListProgram lists program slots for a congress (public).
 func (h *ProgramHandler) PublicListProgram(c *gin.Context) {
-	congressID, err := uuid.Parse(c.Param("congressId"))
+	congressID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "Invalid congress ID")
 		return
@@ -312,7 +312,7 @@ func (h *ProgramHandler) PublicListProgram(c *gin.Context) {
 
 // PublicListDates returns distinct program dates for a congress.
 func (h *ProgramHandler) PublicListDates(c *gin.Context) {
-	congressID, err := uuid.Parse(c.Param("congressId"))
+	congressID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "Invalid congress ID")
 		return

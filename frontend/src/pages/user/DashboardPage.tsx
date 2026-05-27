@@ -81,7 +81,7 @@ function openReceiptWindow(ins: Inscription, congressName: string) {
   pw.document.write(`
     <!DOCTYPE html>
     <html lang="fr">
-    <head><meta charset="UTF-8"><title>Reçu — ${ins.numero_facture}</title>
+    <head><meta charset="UTF-8"><title>Reçu - ${ins.numero_facture}</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
       body{font-family:'Courier New',monospace;background:#f3f4f6;display:flex;justify-content:center;padding:40px 20px}
@@ -111,7 +111,7 @@ function openReceiptWindow(ins: Inscription, congressName: string) {
       <div class="row"><span class="lbl">Téléphone</span><span class="val">${ins.telephone}</span></div>
       <div class="row"><span class="lbl">Type</span><span class="val">${ins.participation_type}</span></div>
       <div class="row"><span class="lbl">Pays</span><span class="val">${ins.pays}</span></div>
-      <div class="row"><span class="lbl">Organisme</span><span class="val">${ins.organisme ?? '—'}</span></div>
+      <div class="row"><span class="lbl">Organisme</span><span class="val">${ins.organisme ?? '-'}</span></div>
       <div class="row"><span class="lbl">Méthode</span><span class="val">${ins.methode_paiement}</span></div>
       <hr>
       <div class="status">Paiement confirmé</div>
@@ -160,13 +160,13 @@ function MyInscriptions() {
                 </p>
                 <p className={`text-xs mt-0.5 ${confirmed ? 'text-green-700' : 'text-yellow-700'}`}>
                   {inscription.participation_type} • N° {inscription.numero_facture}
-                  {!confirmed && ' — En attente de validation du paiement'}
+                  {!confirmed && ' - En attente de validation du paiement'}
                 </p>
                 {inscription.congress && (
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <CalendarDays className="h-3 w-3" />
-                      {formatDate(inscription.congress.start_date)} – {formatDate(inscription.congress.end_date)}
+                      {formatDate(inscription.congress.start_date)} - {formatDate(inscription.congress.end_date)}
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
