@@ -167,6 +167,8 @@ export interface InscriptionRequest {
 export interface Inscription {
   id: number;
   user_id: string;
+  congress_id: string;
+  congress?: Congress;
   nom: string;
   prenom: string;
   email: string;

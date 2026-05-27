@@ -91,10 +91,15 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		inscriptions := protected.Group("/inscriptions")
 		{
 			inscriptions.POST("", inscriptionHandler.CreateInscription)
+			inscriptions.GET("", inscriptionHandler.ListMyInscriptions)
 			inscriptions.GET("/me", inscriptionHandler.GetMyInscription)
 			inscriptions.GET("/receipt", inscriptionHandler.DownloadReceipt)
 			inscriptions.GET("/badge", inscriptionHandler.DownloadBadge)
 			inscriptions.GET("/attestation", inscriptionHandler.DownloadAttestation)
+			inscriptions.GET("/:id", inscriptionHandler.GetInscription)
+			inscriptions.GET("/:id/receipt", inscriptionHandler.DownloadInscriptionReceipt)
+			inscriptions.GET("/:id/badge", inscriptionHandler.DownloadInscriptionBadge)
+			inscriptions.GET("/:id/attestation", inscriptionHandler.DownloadInscriptionAttestation)
 		}
 
 		// ─── Super Admin routes ────────────────────────────────────────

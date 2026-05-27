@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"strconv"
 	"time"
 
 	"congres-app/backend/internal/config"
@@ -45,6 +46,7 @@ type CreateInscriptionRequest struct {
 	Montant           float64 `json:"montant" binding:"required,gt=0"`
 	MethodePaiement   string  `json:"methode_paiement" binding:"required"`
 	CodeOTP           string  `json:"code_otp" binding:"required"`
+	CongressID        string  `json:"congress_id" binding:"required"`
 }
 
 // @Summary     Créer une inscription
@@ -64,6 +66,18 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 	var req CreateInscriptionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	congressID, err := uuid.Parse(req.CongressID)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid congress ID")
+		return
+	}
+
+	var congress models.Congress
+	if err := h.db.Where("id = ? AND status = ?", congressID, "active").First(&congress).Error; err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Congress not found or not active")
 		return
 	}
 
@@ -101,6 +115,7 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 
 	inscription := models.Inscription{
 		UserID:            userID,
+		CongressID:        congressID,
 		Nom:               req.Nom,
 		Prenom:            req.Prenom,
 		Email:             req.Email,
@@ -122,7 +137,30 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusCreated, inscription)
 }
 
-// GetMyInscription returns the inscription of the currently authenticated user.
+// ListMyInscriptions returns all inscriptions of the currently authenticated user.
+func (h *InscriptionHandler) ListMyInscriptions(c *gin.Context) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	congressIDStr := c.Query("congress_id")
+	var inscriptions []models.Inscription
+	query := h.db.Where("user_id = ?", userID).Preload("Congress").Order("created_at desc")
+	if congressIDStr != "" {
+		query = query.Where("congress_id = ?", congressIDStr)
+	}
+	if err := query.Find(&inscriptions).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to retrieve inscriptions")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, inscriptions)
+}
+
+// GetMyInscription returns the latest inscription of the currently authenticated user.
 func (h *InscriptionHandler) GetMyInscription(c *gin.Context) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -132,12 +170,41 @@ func (h *InscriptionHandler) GetMyInscription(c *gin.Context) {
 	}
 
 	var inscription models.Inscription
-	if err := h.db.Where("user_id = ?", userID).Order("created_at desc").First(&inscription).Error; err != nil {
+	query := h.db.Where("user_id = ?", userID).Preload("Congress").Order("created_at desc")
+	if congressID := c.Query("congress_id"); congressID != "" {
+		query = query.Where("congress_id = ?", congressID)
+	}
+	if err := query.First(&inscription).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.RespondSuccess(c, http.StatusOK, nil)
 			return
 		}
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to retrieve inscription")
+		return
+	}
+
+	utils.RespondSuccess(c, http.StatusOK, inscription)
+}
+
+// GetInscription returns a specific inscription by ID (must belong to current user).
+func (h *InscriptionHandler) GetInscription(c *gin.Context) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid inscription ID")
+		return
+	}
+
+	var inscription models.Inscription
+	if err := h.db.Preload("Congress").First(&inscription, "id = ? AND user_id = ?", id, userID).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Inscription not found")
 		return
 	}
 
@@ -154,7 +221,7 @@ func generateInvoiceNumber() string {
 	)
 }
 
-// getMyInscription fetches the current user's inscription.
+// getMyInscription fetches the current user's inscription (optionally filtered by congress_id).
 func (h *InscriptionHandler) getMyInscription(c *gin.Context) (*models.Inscription, error) {
 	userIDStr, _ := c.Get(middleware.ContextUserID)
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -163,7 +230,32 @@ func (h *InscriptionHandler) getMyInscription(c *gin.Context) (*models.Inscripti
 	}
 
 	var inscription models.Inscription
-	if err := h.db.Where("user_id = ?", userID).Order("created_at desc").First(&inscription).Error; err != nil {
+	query := h.db.Where("user_id = ?", userID).Order("created_at desc")
+	if congressID := c.Query("congress_id"); congressID != "" {
+		query = query.Where("congress_id = ?", congressID)
+	}
+	if err := query.First(&inscription).Error; err != nil {
+		return nil, err
+	}
+	return &inscription, nil
+}
+
+// getInscriptionByID fetches a specific inscription by ID (must belong to current user).
+func (h *InscriptionHandler) getInscriptionByID(c *gin.Context) (*models.Inscription, error) {
+	userIDStr, _ := c.Get(middleware.ContextUserID)
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		return nil, err
+	}
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	var inscription models.Inscription
+	if err := h.db.First(&inscription, "id = ? AND user_id = ?", id, userID).Error; err != nil {
 		return nil, err
 	}
 	return &inscription, nil
@@ -180,6 +272,31 @@ func (h *InscriptionHandler) getMyInscription(c *gin.Context) (*models.Inscripti
 // @Router      /inscriptions/receipt [get]
 func (h *InscriptionHandler) DownloadReceipt(c *gin.Context) {
 	inscription, err := h.getMyInscription(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Inscription not found")
+		return
+	}
+
+	if inscription.PaymentStatus != "confirmed" {
+		utils.RespondError(c, http.StatusForbidden, "Payment not yet confirmed")
+		return
+	}
+
+	h.renderReceiptHTML(c, inscription)
+}
+
+// @Summary     Télécharger le reçu d'une inscription spécifique
+// @Description Génère un reçu de paiement au format HTML pour une inscription donnée
+// @Tags        inscriptions
+// @Produce     text/html
+// @Param       id path int true "ID de l'inscription"
+// @Success     200 {string} string "HTML du reçu"
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /inscriptions/{id}/receipt [get]
+func (h *InscriptionHandler) DownloadInscriptionReceipt(c *gin.Context) {
+	inscription, err := h.getInscriptionByID(c)
 	if err != nil {
 		utils.RespondError(c, http.StatusNotFound, "Inscription not found")
 		return
@@ -217,6 +334,31 @@ func (h *InscriptionHandler) DownloadBadge(c *gin.Context) {
 	h.renderBadgeHTML(c, inscription)
 }
 
+// @Summary     Télécharger le badge d'une inscription spécifique
+// @Description Génère le badge du participant pour une inscription donnée
+// @Tags        inscriptions
+// @Produce     text/html
+// @Param       id path int true "ID de l'inscription"
+// @Success     200 {string} string "HTML du badge"
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /inscriptions/{id}/badge [get]
+func (h *InscriptionHandler) DownloadInscriptionBadge(c *gin.Context) {
+	inscription, err := h.getInscriptionByID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Inscription not found")
+		return
+	}
+
+	if inscription.PaymentStatus != "confirmed" {
+		utils.RespondError(c, http.StatusForbidden, "Payment not yet confirmed")
+		return
+	}
+
+	h.renderBadgeHTML(c, inscription)
+}
+
 // @Summary     Télécharger l'attestation
 // @Description Génère l'attestation de participation au format HTML (si disponible)
 // @Tags        inscriptions
@@ -239,9 +381,6 @@ func (h *InscriptionHandler) DownloadAttestation(c *gin.Context) {
 		return
 	}
 
-	// Check if attestations are available for this congress
-	// The congress admin enables attestations via the admin endpoint
-	// For now, check if there's a congress with attestations enabled
 	congress, _ := h.getCongressForInscription(inscription)
 	if congress == nil || !congress.AttestationsAvailable {
 		utils.RespondError(c, http.StatusForbidden, "Attestation not yet available")
@@ -251,25 +390,42 @@ func (h *InscriptionHandler) DownloadAttestation(c *gin.Context) {
 	h.renderAttestationHTML(c, inscription, congress)
 }
 
-// getCongressForInscription attempts to find the congress associated with the inscription.
+// @Summary     Télécharger l'attestation d'une inscription spécifique
+// @Description Génère l'attestation pour une inscription donnée
+// @Tags        inscriptions
+// @Produce     text/html
+// @Param       id path int true "ID de l'inscription"
+// @Success     200 {string} string "HTML de l'attestation"
+// @Failure     401 {object} utils.ErrorResponse
+// @Failure     403 {object} utils.ErrorResponse
+// @Failure     404 {object} utils.ErrorResponse
+// @Security    BearerAuth
+// @Router      /inscriptions/{id}/attestation [get]
+func (h *InscriptionHandler) DownloadInscriptionAttestation(c *gin.Context) {
+	inscription, err := h.getInscriptionByID(c)
+	if err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Inscription not found")
+		return
+	}
+
+	if inscription.PaymentStatus != "confirmed" {
+		utils.RespondError(c, http.StatusForbidden, "Payment not yet confirmed")
+		return
+	}
+
+	congress, _ := h.getCongressForInscription(inscription)
+	if congress == nil || !congress.AttestationsAvailable {
+		utils.RespondError(c, http.StatusForbidden, "Attestation not yet available")
+		return
+	}
+
+	h.renderAttestationHTML(c, inscription, congress)
+}
+
+// getCongressForInscription returns the congress directly from the inscription's congress_id.
 func (h *InscriptionHandler) getCongressForInscription(inscription *models.Inscription) (*models.Congress, error) {
-	// Find the user's congress via their congress_id
-	var user models.User
-	if err := h.db.First(&user, "id = ?", inscription.UserID).Error; err != nil {
-		return nil, err
-	}
-
-	if user.CongressID == nil {
-		// Fallback: get the most recent active congress
-		var congress models.Congress
-		if err := h.db.Where("status IN ('active', 'completed')").Order("created_at desc").First(&congress).Error; err != nil {
-			return nil, err
-		}
-		return &congress, nil
-	}
-
 	var congress models.Congress
-	if err := h.db.First(&congress, "id = ?", user.CongressID).Error; err != nil {
+	if err := h.db.First(&congress, "id = ?", inscription.CongressID).Error; err != nil {
 		return nil, err
 	}
 	return &congress, nil

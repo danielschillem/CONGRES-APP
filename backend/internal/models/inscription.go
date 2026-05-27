@@ -10,6 +10,8 @@ type Inscription struct {
 	ID                uint      `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserID            uuid.UUID `json:"user_id" gorm:"type:uuid;not null;index"`
 	User              User      `json:"-" gorm:"foreignKey:UserID"`
+	CongressID        uuid.UUID `json:"congress_id" gorm:"type:uuid;not null;index"`
+	Congress          Congress  `json:"-" gorm:"foreignKey:CongressID"`
 	Nom               string    `json:"nom" gorm:"not null"`
 	Prenom            string    `json:"prenom" gorm:"not null"`
 	Email             string    `json:"email" gorm:"not null"`

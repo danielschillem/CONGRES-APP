@@ -264,14 +264,30 @@ export const inscriptionsApi = {
   create: (data: Record<string, unknown>) =>
     api.post('/inscriptions', data),
 
-  getMy: () => api.get('/inscriptions/me'),
+  getAll: (params?: Record<string, unknown>) =>
+    api.get('/inscriptions', { params }),
 
-  downloadReceipt: () =>
-    api.get('/inscriptions/receipt', { responseType: 'blob' }),
+  getMy: (params?: Record<string, unknown>) =>
+    api.get('/inscriptions/me', { params }),
 
-  downloadBadge: () =>
-    api.get('/inscriptions/badge', { responseType: 'blob' }),
+  getOne: (id: number) =>
+    api.get(`/inscriptions/${id}`),
 
-  downloadAttestation: () =>
-    api.get('/inscriptions/attestation', { responseType: 'blob' }),
+  downloadReceipt: (params?: Record<string, unknown>) =>
+    api.get('/inscriptions/receipt', { params, responseType: 'blob' }),
+
+  downloadBadge: (params?: Record<string, unknown>) =>
+    api.get('/inscriptions/badge', { params, responseType: 'blob' }),
+
+  downloadAttestation: (params?: Record<string, unknown>) =>
+    api.get('/inscriptions/attestation', { params, responseType: 'blob' }),
+
+  downloadInscriptionReceipt: (id: number) =>
+    api.get(`/inscriptions/${id}/receipt`, { responseType: 'blob' }),
+
+  downloadInscriptionBadge: (id: number) =>
+    api.get(`/inscriptions/${id}/badge`, { responseType: 'blob' }),
+
+  downloadInscriptionAttestation: (id: number) =>
+    api.get(`/inscriptions/${id}/attestation`, { responseType: 'blob' }),
 }

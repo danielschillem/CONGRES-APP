@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
-import { CheckCircle2, CreditCard, Smartphone } from 'lucide-react'
-import { inscriptionsApi } from '@/lib/api'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { CheckCircle2, CreditCard, Smartphone, CalendarDays, MapPin } from 'lucide-react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { inscriptionsApi, congressesApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatDate } from '@/lib/utils'
+import { Congress } from '@/types'
 
 const inscriptionSchema = z.object({
   nom: z.string().min(2, 'Le nom est requis'),
@@ -41,15 +44,41 @@ const inscriptionSchema = z.object({
 
 type InscriptionFormData = z.infer<typeof inscriptionSchema>
 
-const PARTICIPATION_PRICES: Record<string, number> = {
+const DEFAULT_PRICES: Record<string, number> = {
   Présentiel: 50000,
   'En ligne': 25000,
   Virtuel: 15000,
 }
 
 export function InscriptionPage() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const congressId = searchParams.get('congress_id')
   const [success, setSuccess] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [prices, setPrices] = useState<Record<string, number>>(DEFAULT_PRICES)
+
+  const { data: congressData, isLoading: congressLoading } = useQuery({
+    queryKey: ['inscription-congress', congressId],
+    queryFn: async () => (await congressesApi.getOne(congressId!)).data,
+    enabled: !!congressId,
+  })
+
+  const congress: Congress | undefined = congressData?.data
+
+  useEffect(() => {
+    if (congress?.config) {
+      const config = congress.config
+      const pricing = (config.pricing ?? {}) as { presentiel?: number; en_ligne?: number; virtuel?: number }
+      if (pricing.presentiel || pricing.en_ligne || pricing.virtuel) {
+        setPrices({
+          Présentiel: pricing.presentiel ?? DEFAULT_PRICES['Présentiel'],
+          'En ligne': pricing.en_ligne ?? DEFAULT_PRICES['En ligne'],
+          Virtuel: pricing.virtuel ?? DEFAULT_PRICES['Virtuel'],
+        })
+      }
+    }
+  }, [congress])
 
   const {
     register,
@@ -70,8 +99,8 @@ export function InscriptionPage() {
 
   const handleParticipationChange = (value: string) => {
     setValue('participation_type', value as 'Présentiel' | 'En ligne' | 'Virtuel')
-    if (PARTICIPATION_PRICES[value]) {
-      setValue('montant', PARTICIPATION_PRICES[value].toString())
+    if (prices[value]) {
+      setValue('montant', prices[value].toString())
     }
   }
 
@@ -86,7 +115,7 @@ export function InscriptionPage() {
       setServerError(
         error?.response?.data?.message ||
           error?.response?.data?.error ||
-          'Une erreur est survenue lors de l\'inscription.'
+          "Une erreur est survenue lors de l'inscription."
       )
     },
   })
@@ -96,7 +125,19 @@ export function InscriptionPage() {
     mutation.mutate({
       ...data,
       montant: Number(data.montant),
+      congress_id: congressId,
     } as Record<string, unknown>)
+  }
+
+  if (!congressId) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-20">
+        <CalendarDays className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Aucun congrès sélectionné</h2>
+        <p className="text-gray-500 mb-6">Veuillez choisir un congrès depuis la page d'accueil.</p>
+        <Button onClick={() => navigate('/')}>Voir les congrès actifs</Button>
+      </div>
+    )
   }
 
   if (success) {
@@ -114,8 +155,8 @@ export function InscriptionPage() {
               Votre inscription au congrès a été enregistrée avec succès. Vous recevrez un email
               de confirmation avec les détails de votre participation.
             </p>
-            <Button className="mt-6" onClick={() => setSuccess(false)}>
-              Nouvelle inscription
+            <Button className="mt-6" onClick={() => navigate('/dashboard')}>
+              Voir mes inscriptions
             </Button>
           </CardContent>
         </Card>
@@ -131,6 +172,36 @@ export function InscriptionPage() {
           Remplissez le formulaire pour vous inscrire à l'événement
         </p>
       </div>
+
+      {congressLoading ? (
+        <Card>
+          <CardContent className="py-6 text-center text-gray-400">Chargement du congrès...</CardContent>
+        </Card>
+      ) : congress && (
+        <Card className="bg-primary-50 border-primary-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 text-primary-700 shrink-0">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-primary-900">{congress.title}</p>
+                {congress.subtitle && <p className="text-sm text-primary-700">{congress.subtitle}</p>}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-primary-600">
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    Du {formatDate(congress.start_date)} au {formatDate(congress.end_date)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {[congress.location, congress.city].filter(Boolean).join(', ')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {serverError && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-3.5 text-sm text-red-700">
@@ -234,13 +305,13 @@ export function InscriptionPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Présentiel">
-                        Présentiel — {PARTICIPATION_PRICES['Présentiel'].toLocaleString('fr-FR')} FCFA
+                        Présentiel — {prices['Présentiel'].toLocaleString('fr-FR')} FCFA
                       </SelectItem>
                       <SelectItem value="En ligne">
-                        En ligne — {PARTICIPATION_PRICES['En ligne'].toLocaleString('fr-FR')} FCFA
+                        En ligne — {prices['En ligne'].toLocaleString('fr-FR')} FCFA
                       </SelectItem>
                       <SelectItem value="Virtuel">
-                        Virtuel — {PARTICIPATION_PRICES['Virtuel'].toLocaleString('fr-FR')} FCFA
+                        Virtuel — {prices['Virtuel'].toLocaleString('fr-FR')} FCFA
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -253,7 +324,7 @@ export function InscriptionPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-primary-700">Montant à payer</span>
                   <span className="text-lg font-bold text-primary-700">
-                    {PARTICIPATION_PRICES[participationType]?.toLocaleString('fr-FR')} FCFA
+                    {prices[participationType]?.toLocaleString('fr-FR')} FCFA
                   </span>
                 </div>
               </div>
@@ -317,7 +388,7 @@ export function InscriptionPage() {
 
         <div className="flex items-center justify-end gap-3">
           <Button type="submit" size="lg" loading={isSubmitting || mutation.isPending}>
-            {isSubmitting || mutation.isPending ? 'Traitement en cours...' : 'Valider l\'inscription'}
+            {isSubmitting || mutation.isPending ? "Traitement en cours..." : "Valider l'inscription"}
           </Button>
         </div>
       </form>
