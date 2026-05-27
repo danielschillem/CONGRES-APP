@@ -96,3 +96,25 @@ func SuperAdminRequired() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// ReviewerRequired checks for reviewer role or higher (reviewer, congress_admin, super_admin).
+func ReviewerRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get(ContextRole)
+		if !exists {
+			utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
+			c.Abort()
+			return
+		}
+
+		roleStr := role.(string)
+		allowed := map[string]bool{"reviewer": true, "congress_admin": true, "super_admin": true}
+		if !allowed[roleStr] {
+			utils.RespondError(c, http.StatusForbidden, "Reviewer access required")
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}

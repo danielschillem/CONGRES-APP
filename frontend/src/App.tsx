@@ -29,8 +29,18 @@ import { AdminAttestationsPage } from '@/pages/admin/AdminAttestationsPage'
 import { SuperCongressesPage } from '@/pages/admin/SuperCongressesPage'
 import { AdminCongressSettingsPage } from '@/pages/admin/AdminCongressSettingsPage'
 import { AdminActorsPage } from '@/pages/admin/AdminActorsPage'
+import { AdminReviewGridsPage } from '@/pages/admin/AdminReviewGridsPage'
+import { AdminReviewerInvitationsPage } from '@/pages/admin/AdminReviewerInvitationsPage'
+import { AdminBroadcastPage } from '@/pages/admin/AdminBroadcastPage'
 
 import { InscriptionPage } from '@/pages/InscriptionPage'
+import { VirtualLobby } from '@/pages/VirtualLobby'
+import { VirtualRoom } from '@/pages/VirtualRoom'
+import { VirtualSessionsPage } from '@/pages/user/VirtualSessionsPage'
+import { AdminVirtualSessions } from '@/pages/admin/AdminVirtualSessions'
+import { ReviewerDashboardPage } from '@/pages/reviewer/ReviewerDashboardPage'
+import { AdminProgramPage } from '@/pages/admin/AdminProgramPage'
+import { AdminProceedingsPage } from '@/pages/admin/AdminProceedingsPage'
 import { User } from '@/types'
 
 const queryClient = new QueryClient({
@@ -73,12 +83,22 @@ function App() {
           <Route element={<ProtectedRoute requiredRole="user" />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/congress/:id/virtual" element={<VirtualLobby />} />
               <Route path="/soumission/nouveau" element={<SoumissionFormPage />} />
               <Route path="/soumission/:id/modifier" element={<SoumissionFormPage />} />
               <Route path="/soumission/:id" element={<SoumissionViewPage />} />
               <Route path="/inscription" element={<InscriptionPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/virtual/sessions" element={<VirtualSessionsPage />} />
+              <Route path="/virtual/session/:id" element={<VirtualRoom />} />
               <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+          </Route>
+
+          {/* Reviewer protected routes */}
+          <Route element={<ProtectedRoute requiredRole={['reviewer', 'super_admin', 'congress_admin']} />}>
+            <Route element={<Layout />}>
+              <Route path="/reviewer/dashboard" element={<ReviewerDashboardPage />} />
             </Route>
           </Route>
 
@@ -94,7 +114,13 @@ function App() {
               <Route path="/admin/badges" element={<AdminBadgesPage />} />
               <Route path="/admin/attestations" element={<AdminAttestationsPage />} />
               <Route path="/admin/congres" element={<AdminCongressSettingsPage />} />
+              <Route path="/admin/virtual/sessions" element={<AdminVirtualSessions />} />
+              <Route path="/admin/program" element={<AdminProgramPage />} />
+              <Route path="/admin/actes" element={<AdminProceedingsPage />} />
               <Route path="/admin/acteurs" element={<AdminActorsPage />} />
+              <Route path="/admin/grilles-relecture" element={<AdminReviewGridsPage />} />
+              <Route path="/admin/invitations-relecteurs" element={<AdminReviewerInvitationsPage />} />
+              <Route path="/admin/diffusion" element={<AdminBroadcastPage />} />
               <Route path="/admin/profile" element={<AdminProfilePage />} />
             </Route>
           </Route>

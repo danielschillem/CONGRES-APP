@@ -18,6 +18,7 @@ type Inscription struct {
 	Telephone         string    `json:"telephone" gorm:"not null"`
 	Organisme         string    `json:"organisme" gorm:"not null"`
 	Pays              string    `json:"pays" gorm:"not null"`
+	TariffLabel       string    `json:"tariff_label" gorm:"not null;default:''"`
 	ParticipationType string    `json:"participation_type" gorm:"not null"`
 	Montant           float64   `json:"montant" gorm:"not null"`
 	MethodePaiement   string    `json:"methode_paiement" gorm:"not null"`

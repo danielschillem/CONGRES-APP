@@ -11,6 +11,7 @@ import {
   BookOpen,
   AlertCircle,
   LogIn,
+  Video,
 } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { congressesApi } from '@/lib/api'
@@ -18,7 +19,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getPricingOptions } from '@/lib/utils'
 import { Congress } from '@/types'
 
 function daysLeft(dateStr: string): number {
@@ -121,6 +122,15 @@ function ActionSection({
             )}
           </div>
         )}
+
+        {isAuthenticated && (
+          <Button size="lg" variant="secondary" className="min-w-[220px] gap-2" asChild>
+            <Link to={`/congress/${congress.id}/virtual`}>
+              <Video className="h-5 w-5" />
+              Sessions virtuelles
+            </Link>
+          </Button>
+        )}
       </div>
 
       {!isAuthenticated && submissionOpen && (
@@ -181,7 +191,6 @@ export function CongressDetailPage() {
   }
 
   const config = congress.config ?? {}
-  const pricing = (config.pricing ?? {}) as { presentiel?: number; en_ligne?: number; virtuel?: number }
   const deadlines = (config.deadlines ?? {}) as { submission?: string; inscription?: string }
   const themes = (config.themes ?? []) as string[]
   const submissionTypes = (config.submission_types ?? []) as string[]
@@ -195,11 +204,7 @@ export function CongressDetailPage() {
   const inscriptionDays = daysLeft(inscriptionDeadline.toISOString())
   const submissionDays = daysLeft(submissionDeadline.toISOString())
 
-  const pricingEntries = [
-    { label: 'Présentiel', value: pricing.presentiel },
-    { label: 'En ligne', value: pricing.en_ligne },
-    { label: 'Virtuel', value: pricing.virtuel },
-  ].filter((p): p is { label: string; value: number } => !!p.value)
+  const pricingEntries = getPricingOptions(config)
 
   const secretariat = org.secretariat
     ? Array.isArray(org.secretariat)
@@ -282,7 +287,7 @@ export function CongressDetailPage() {
             {pricingEntries.length > 0 && (
               <span className="flex items-center gap-1.5">
                 <Ticket className="h-4 w-4" />À partir de{' '}
-                {Math.min(...pricingEntries.map((p) => p.value)).toLocaleString('fr-FR')} FCFA
+                {Math.min(...pricingEntries.map((p) => p.amount)).toLocaleString('fr-FR')} FCFA
               </span>
             )}
           </div>
@@ -446,29 +451,23 @@ export function CongressDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div
-                className={`grid gap-4 ${
-                  pricingEntries.length === 1
-                    ? 'grid-cols-1 max-w-xs'
-                    : pricingEntries.length === 2
-                    ? 'sm:grid-cols-2'
-                    : 'sm:grid-cols-3'
-                }`}
-              >
+              <div className="grid gap-3 sm:grid-cols-2">
                 {pricingEntries.map((p, i) => (
                   <div
-                    key={p.label}
-                    className={`rounded-xl border-2 p-5 text-center ${
+                    key={i}
+                    className={`rounded-xl border-2 p-4 ${
                       i === 0
                         ? 'border-primary-200 bg-primary-50'
                         : 'border-gray-100 bg-gray-50'
                     }`}
                   >
-                    <p className="text-sm font-medium text-gray-600 mb-1">{p.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {Number(p.value).toLocaleString('fr-FR')}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900">{p.label}</p>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                      {p.amount.toLocaleString('fr-FR')}
+                      <span className="text-sm font-normal text-gray-400 ml-1">FCFA</span>
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">FCFA</p>
                   </div>
                 ))}
               </div>

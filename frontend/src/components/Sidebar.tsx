@@ -16,6 +16,13 @@ import {
   Bell,
   CalendarDays,
   Settings,
+  Video,
+  BookOpen,
+  CalendarRange,
+  Star,
+  ListChecks,
+  Mail,
+  Megaphone,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -59,6 +66,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       label: 'Inscription',
       href: '/inscription',
       icon: <Users className="h-4 w-4" />,
+    },
+    {
+      label: 'Sessions virtuelles',
+      href: '/virtual/sessions',
+      icon: <Video className="h-4 w-4" />,
     },
     {
       label: 'Notifications',
@@ -149,6 +161,36 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       icon: <BadgeCheck className="h-4 w-4" />,
     },
     {
+      label: 'Programmation',
+      href: '/admin/program',
+      icon: <CalendarRange className="h-4 w-4" />,
+    },
+    {
+      label: 'Actes',
+      href: '/admin/actes',
+      icon: <BookOpen className="h-4 w-4" />,
+    },
+    {
+      label: 'Sessions virtuelles',
+      href: '/admin/virtual/sessions',
+      icon: <Video className="h-4 w-4" />,
+    },
+    {
+      label: 'Grilles de relecture',
+      href: '/admin/grilles-relecture',
+      icon: <ListChecks className="h-4 w-4" />,
+    },
+    {
+      label: 'Gestion des relecteurs',
+      href: '/admin/invitations-relecteurs',
+      icon: <Mail className="h-4 w-4" />,
+    },
+    {
+      label: 'Diffusion',
+      href: '/admin/diffusion',
+      icon: <Megaphone className="h-4 w-4" />,
+    },
+    {
       label: 'Attestations',
       href: '/admin/attestations',
       icon: <Award className="h-4 w-4" />,
@@ -160,7 +202,28 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     },
   ]
 
-  const navItems = isAdmin ? adminNavItems : userNavItems
+  const isReviewer = user?.role === 'reviewer'
+
+  const reviewerNavItems: NavItem[] = [
+    {
+      label: 'Évaluations',
+      href: '/reviewer/dashboard',
+      icon: <Star className="h-4 w-4" />,
+      exact: true,
+    },
+    {
+      label: 'Notifications',
+      href: '/notifications',
+      icon: <Bell className="h-4 w-4" />,
+    },
+    {
+      label: 'Mon profil',
+      href: '/profile',
+      icon: <UserCircle className="h-4 w-4" />,
+    },
+  ]
+
+  const navItems = isReviewer ? reviewerNavItems : isAdmin ? adminNavItems : userNavItems
 
   const isNavItemActive = (item: NavItem) => {
     const itemUrl = new URL(item.href, window.location.origin)

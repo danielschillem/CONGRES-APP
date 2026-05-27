@@ -170,6 +170,16 @@ export const soumissionsApi = {
 
   exportCSV: (params?: Record<string, unknown>) =>
     api.get('/admin/soumissions/export/csv', { params, responseType: 'blob' }),
+
+  // Reviewer assignment
+  assignReviewer: (id: string, reviewerId: string) =>
+    api.post(`/admin/soumissions/${id}/assign-reviewer`, { reviewer_id: reviewerId }),
+
+  getReviews: (id: string) =>
+    api.get(`/admin/soumissions/${id}/reviews`),
+
+  getReviewStats: (id: string) =>
+    api.get(`/admin/soumissions/${id}/review-stats`),
 }
 
 // Notifications endpoints
@@ -209,6 +219,79 @@ export const usersApi = {
 }
 
 // Admin endpoints
+// Review Grid endpoints
+export const reviewGridApi = {
+  list: () => api.get('/admin/review-grids'),
+  create: (data: { name: string; is_active?: boolean }) =>
+    api.post('/admin/review-grids', data),
+  update: (id: string, data: Record<string, unknown>) =>
+    api.patch(`/admin/review-grids/${id}`, data),
+  delete: (id: string) => api.delete(`/admin/review-grids/${id}`),
+  getActive: (params?: Record<string, unknown>) =>
+    api.get('/admin/review-grids/active', { params }),
+  listCriteria: (id: string) => api.get(`/admin/review-grids/${id}/criteria`),
+  createCriterion: (id: string, data: Record<string, unknown>) =>
+    api.post(`/admin/review-grids/${id}/criteria`, data),
+  updateCriterion: (id: string, criterionId: string, data: Record<string, unknown>) =>
+    api.patch(`/admin/review-grids/${id}/criteria/${criterionId}`, data),
+  deleteCriterion: (id: string, criterionId: string) =>
+    api.delete(`/admin/review-grids/${id}/criteria/${criterionId}`),
+}
+
+// Reviewer invitation endpoints
+export const reviewerInvitationApi = {
+  list: (params?: Record<string, unknown>) =>
+    api.get('/admin/reviewer-invitations', { params }),
+  invite: (data: Record<string, unknown>) =>
+    api.post('/admin/reviewer-invitations', data),
+  inviteBatch: (data: Record<string, unknown>) =>
+    api.post('/admin/reviewer-invitations/batch', data),
+  resend: (id: string) =>
+    api.post(`/admin/reviewer-invitations/${id}/resend`),
+  cancel: (id: string) =>
+    api.post(`/admin/reviewer-invitations/${id}/cancel`),
+  sendReminders: () =>
+    api.post('/admin/reviewer-invitations/send-reminders'),
+  getReviewersStats: () =>
+    api.get('/admin/reviewers/stats'),
+}
+
+// Thematic coordinator endpoints
+export const thematicCoordinatorApi = {
+  list: () => api.get('/admin/thematic-coordinators'),
+  set: (data: Record<string, unknown>) =>
+    api.post('/admin/thematic-coordinators', data),
+  remove: (theme: string) =>
+    api.delete(`/admin/thematic-coordinators?theme=${encodeURIComponent(theme)}`),
+}
+
+// Broadcast endpoints
+export const broadcastApi = {
+  list: () => api.get('/admin/broadcasts'),
+  create: (data: Record<string, unknown>) =>
+    api.post('/admin/broadcasts', data),
+  createAndSend: (data: Record<string, unknown>) =>
+    api.post('/admin/broadcasts/create-and-send', data),
+  send: (id: string) =>
+    api.post(`/admin/broadcasts/${id}/send`),
+  get: (id: string) => api.get(`/admin/broadcasts/${id}`),
+  delete: (id: string) => api.delete(`/admin/broadcasts/${id}`),
+  getStats: () => api.get('/admin/broadcasts/stats'),
+  getTargets: () => api.get('/admin/broadcasts/targets'),
+}
+
+// Reviewer endpoints (for getActiveGrid from reviewer perspective)
+export const reviewerApi = {
+  getAssignments: (params?: Record<string, unknown>) =>
+    api.get('/reviewer/assignments', { params }),
+  startReview: (id: string) =>
+    api.post(`/reviewer/assignments/${id}/start`),
+  submitReview: (id: string, data: { scores: { criterion_id: string; score: number }[]; comment: string }) =>
+    api.post(`/reviewer/assignments/${id}/submit`, data),
+  getActiveReviewGrid: (params?: Record<string, unknown>) =>
+    api.get('/reviewer/review-grid/active', { params }),
+}
+
 export const adminApi = {
   getStats: () => api.get('/admin/stats'),
   getUsers: (params?: Record<string, unknown>) =>
@@ -290,4 +373,112 @@ export const inscriptionsApi = {
 
   downloadInscriptionAttestation: (id: number) =>
     api.get(`/inscriptions/${id}/attestation`, { responseType: 'blob' }),
+}
+
+// Virtual sessions API
+export const virtualApi = {
+  // User endpoints
+  listSessions: (congressId: string) =>
+    api.get('/virtual/sessions', { params: { congress_id: congressId } }),
+
+  getSession: (id: string) =>
+    api.get(`/virtual/sessions/${id}`),
+
+  joinSession: (id: string) =>
+    api.post(`/virtual/sessions/${id}/join`),
+
+  leaveSession: (id: string) =>
+    api.post(`/virtual/sessions/${id}/leave`),
+
+  getMyUpcomingSessions: () =>
+    api.get('/virtual/my-sessions'),
+
+  // Admin endpoints
+  adminListSessions: () =>
+    api.get('/admin/virtual/sessions'),
+
+  adminGetSession: (id: string) =>
+    api.get(`/admin/virtual/sessions/${id}`),
+
+  adminCreateSession: (data: object) =>
+    api.post('/admin/virtual/sessions', data),
+
+  adminUpdateSession: (id: string, data: object) =>
+    api.patch(`/admin/virtual/sessions/${id}`, data),
+
+  adminDeleteSession: (id: string) =>
+    api.delete(`/admin/virtual/sessions/${id}`),
+
+  adminStartSession: (id: string) =>
+    api.post(`/admin/virtual/sessions/${id}/start`),
+
+  adminEndSession: (id: string) =>
+    api.post(`/admin/virtual/sessions/${id}/end`),
+
+  adminGetAttendance: (id: string) =>
+    api.get(`/admin/virtual/sessions/${id}/attendance`),
+}
+
+// Program endpoints
+export const programApi = {
+  // Admin
+  adminListSlots: () =>
+    api.get('/admin/program/slots'),
+
+  adminGetSlot: (id: string) =>
+    api.get(`/admin/program/slots/${id}`),
+
+  adminCreateSlot: (data: Record<string, unknown>) =>
+    api.post('/admin/program/slots', data),
+
+  adminUpdateSlot: (id: string, data: Record<string, unknown>) =>
+    api.patch(`/admin/program/slots/${id}`, data),
+
+  adminDeleteSlot: (id: string) =>
+    api.delete(`/admin/program/slots/${id}`),
+
+  adminListAvailableSoumissions: () =>
+    api.get('/admin/program/available-soumissions'),
+
+  adminListDates: () =>
+    api.get('/admin/program/dates'),
+
+  // Public
+  publicListProgram: (congressId: string, params?: Record<string, unknown>) =>
+    api.get(`/congresses/${congressId}/program`, { params }),
+
+  publicListDates: (congressId: string) =>
+    api.get(`/congresses/${congressId}/program/dates`),
+}
+
+// Proceeding endpoints
+export const proceedingApi = {
+  // Admin
+  adminList: () =>
+    api.get('/admin/proceedings'),
+
+  adminGet: (id: string) =>
+    api.get(`/admin/proceedings/${id}`),
+
+  adminCreate: (data: Record<string, unknown>) =>
+    api.post('/admin/proceedings', data),
+
+  adminUpdate: (id: string, data: Record<string, unknown>) =>
+    api.patch(`/admin/proceedings/${id}`, data),
+
+  adminDelete: (id: string) =>
+    api.delete(`/admin/proceedings/${id}`),
+
+  adminAddSubmission: (id: string, data: Record<string, unknown>) =>
+    api.post(`/admin/proceedings/${id}/submissions`, data),
+
+  adminRemoveSubmission: (id: string, soumissionId: string) =>
+    api.delete(`/admin/proceedings/${id}/submissions/${soumissionId}`),
+
+  // Public
+  publicListByCongress: (congressId: string) =>
+    api.get(`/congresses/${congressId}/proceedings`),
+
+  publicGet: (id: string) =>
+    api.get(`/proceedings/${id}`),
 }

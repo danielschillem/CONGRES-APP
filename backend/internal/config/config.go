@@ -34,6 +34,8 @@ type Config struct {
 	OrangeMoneyAPIPassword    string
 	OrangeMoneyWebhookSecret  string
 
+	JitsiDomain string
+
 	SMTPHost string
 	SMTPPort string
 	SMTPUser string
@@ -72,6 +74,8 @@ func Load() *Config {
 		OrangeMoneyAPIUsername:    getEnv("ORANGE_MONEY_API_USERNAME", ""),
 		OrangeMoneyAPIPassword:    getEnv("ORANGE_MONEY_API_PASSWORD", ""),
 		OrangeMoneyWebhookSecret:  getEnv("ORANGE_MONEY_WEBHOOK_SECRET", ""),
+
+		JitsiDomain: getEnv("JITSI_DOMAIN", "meet.jit.si"),
 
 		SMTPHost: getEnv("SMTP_HOST", ""),
 		SMTPPort: getEnv("SMTP_PORT", "1025"),

@@ -69,11 +69,21 @@ func createAdminNotification(db *gorm.DB, notifType string, soumission *models.S
 }
 
 // createUserNotification creates a notification for a specific user.
-func createUserNotification(db *gorm.DB, notifType string, userID uuid.UUID, soumission *models.Soumission, message string) {
+func createUserNotification(db *gorm.DB, notifType string, userID uuid.UUID, entity interface{}, message string) {
 	dataMap := map[string]interface{}{
-		"message":          message,
-		"soumission_id":    soumission.ID.String(),
-		"soumission_title": soumission.DocumentTitle,
+		"message": message,
+	}
+
+	switch value := entity.(type) {
+	case *models.Soumission:
+		dataMap["soumission_id"] = value.ID.String()
+		dataMap["soumission_title"] = value.DocumentTitle
+	case *models.BroadcastMessage:
+		dataMap["broadcast_id"] = value.ID.String()
+		dataMap["broadcast_subject"] = value.Subject
+	case *models.ReviewerInvitation:
+		dataMap["invitation_id"] = value.ID.String()
+		dataMap["invitation_email"] = value.Email
 	}
 	dataJSON, err := json.Marshal(dataMap)
 	if err != nil {

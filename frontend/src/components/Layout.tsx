@@ -9,6 +9,7 @@ const pageTitles: Record<string, string> = {
   '/inscription': 'Inscription au congrès',
   '/notifications': 'Notifications',
   '/profile': 'Mon profil',
+  '/virtual/sessions': 'Mes sessions virtuelles',
   '/admin/dashboard': 'Tableau de bord administrateur',
   '/admin/soumissions': 'Gestion des soumissions',
   '/admin/inscriptions': 'Gestion des inscriptions',
@@ -18,6 +19,7 @@ const pageTitles: Record<string, string> = {
   '/admin/attestations': 'Attestations de participation',
   '/admin/congres': 'Paramètres du congrès',
   '/admin/acteurs': 'Acteurs du congrès',
+  '/admin/virtual/sessions': 'Sessions virtuelles',
   '/admin/profile': 'Mon profil',
   '/super/congres': 'Gestion des congrès',
   '/super/acteurs': 'Acteurs tous congrès',
@@ -37,6 +39,12 @@ export function Layout() {
     }
     if (location.pathname.startsWith('/admin/soumissions/')) {
       return 'Détail de la soumission'
+    }
+    if (location.pathname.startsWith('/virtual/session/')) {
+      return 'Session virtuelle'
+    }
+    if (location.pathname.startsWith('/congress/') && location.pathname.endsWith('/virtual')) {
+      return 'Sessions virtuelles du congrès'
     }
     return 'Congrès Scientifique'
   }

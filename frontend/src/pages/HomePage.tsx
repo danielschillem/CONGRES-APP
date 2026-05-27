@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 import { congressesApi } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { formatDate } from '@/lib/utils'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatDate, getPricingOptions } from '@/lib/utils'
 import { Congress } from '@/types'
 
 type InscriptionStatus = {
@@ -29,26 +29,9 @@ function getInscriptionStatus(congress: Congress): InscriptionStatus {
   return { open: true, label: 'Inscriptions ouvertes', urgent: false }
 }
 
-function getPricingEntries(congress: Congress) {
-  const config = congress.config ?? {}
-  const pricing = (config.pricing ?? {}) as { presentiel?: number; en_ligne?: number; virtuel?: number }
-  return [
-    { label: 'Présentiel', value: pricing.presentiel },
-    { label: 'En ligne', value: pricing.en_ligne },
-    { label: 'Virtuel', value: pricing.virtuel },
-  ].filter((p): p is { label: string; value: number } => !!p.value)
-}
-
 function CongressCard({ congress }: { congress: Congress }) {
   const status = getInscriptionStatus(congress)
-  const pricingEntries = getPricingEntries(congress)
-
-  const gridClass =
-    pricingEntries.length === 1
-      ? 'grid-cols-1'
-      : pricingEntries.length === 2
-      ? 'grid-cols-2'
-      : 'grid-cols-3'
+  const pricingEntries = getPricingOptions(congress.config)
 
   return (
     <Card className="flex flex-col hover:shadow-lg transition-shadow duration-200">
@@ -102,14 +85,15 @@ function CongressCard({ congress }: { congress: Congress }) {
               <Ticket className="h-3.5 w-3.5" />
               Tarifs d'inscription
             </div>
-            <div className={`grid ${gridClass} gap-1.5`}>
-              {pricingEntries.map((p) => (
-                <div key={p.label} className="bg-gray-50 border border-gray-100 rounded-md p-2 text-center">
-                  <p className="text-xs text-gray-500">{p.label}</p>
-                  <p className="text-sm font-bold text-gray-900 mt-0.5 leading-tight">
-                    {Number(p.value).toLocaleString('fr-FR')}
-                    <span className="text-xs font-normal text-gray-400 ml-0.5">FCFA</span>
-                  </p>
+            <div className="space-y-1.5">
+              {pricingEntries.map((p, i) => (
+                <div key={i} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-md px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium text-gray-900 truncate">{p.label}</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 shrink-0 ml-2">
+                    {p.amount.toLocaleString('fr-FR')} <span className="text-xs font-normal text-gray-400">FCFA</span>
+                  </span>
                 </div>
               ))}
             </div>

@@ -411,6 +411,7 @@ func (h *AdminHandler) ListInscriptions(c *gin.Context) {
 	participationType := c.Query("participation_type")
 	pays := c.Query("pays")
 	paymentStatus := c.Query("payment_status")
+	congressID := c.Query("congress_id")
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
@@ -422,7 +423,7 @@ func (h *AdminHandler) ListInscriptions(c *gin.Context) {
 	}
 	offset := (page - 1) * limit
 
-	query := h.db.Model(&models.Inscription{}).Order("created_at desc")
+	query := h.db.Model(&models.Inscription{}).Preload("Congress").Order("created_at desc")
 
 	if participationType != "" {
 		query = query.Where("participation_type = ?", participationType)
@@ -432,6 +433,9 @@ func (h *AdminHandler) ListInscriptions(c *gin.Context) {
 	}
 	if paymentStatus != "" {
 		query = query.Where("payment_status = ?", paymentStatus)
+	}
+	if congressID != "" {
+		query = query.Where("congress_id = ?", congressID)
 	}
 
 	var total int64
@@ -546,8 +550,9 @@ func (h *AdminHandler) ExportInscriptionsCSV(c *gin.Context) {
 	participationType := c.Query("participation_type")
 	pays := c.Query("pays")
 	paymentStatus := c.Query("payment_status")
+	congressID := c.Query("congress_id")
 
-	query := h.db.Model(&models.Inscription{}).Order("created_at desc")
+	query := h.db.Model(&models.Inscription{}).Preload("Congress").Order("created_at desc")
 
 	if participationType != "" {
 		query = query.Where("participation_type = ?", participationType)
@@ -557,6 +562,9 @@ func (h *AdminHandler) ExportInscriptionsCSV(c *gin.Context) {
 	}
 	if paymentStatus != "" {
 		query = query.Where("payment_status = ?", paymentStatus)
+	}
+	if congressID != "" {
+		query = query.Where("congress_id = ?", congressID)
 	}
 
 	var inscriptions []models.Inscription
@@ -737,4 +745,74 @@ func (h *AdminHandler) DeactivateUser(c *gin.Context) {
 		status = "désactivé"
 	}
 	utils.RespondSuccess(c, http.StatusOK, gin.H{"message": "Compte " + status + " avec succès", "user": user})
+}
+
+type AssignReviewerRequest struct {
+	ReviewerID string `json:"reviewer_id" binding:"required"`
+}
+
+// AssignReviewer assigns a reviewer to a submission.
+func (h *AdminHandler) AssignReviewer(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid soumission ID")
+		return
+	}
+
+	var req AssignReviewerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "reviewer_id is required")
+		return
+	}
+
+	reviewerID, err := uuid.Parse(req.ReviewerID)
+	if err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid reviewer_id")
+		return
+	}
+
+	// Verify soumission exists
+	var soumission models.Soumission
+	if err := h.db.First(&soumission, "id = ?", id).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Soumission not found")
+		return
+	}
+
+	// Verify reviewer exists and has reviewer role
+	var reviewer models.User
+	if err := h.db.Where("id = ? AND role = ?", reviewerID, "reviewer").First(&reviewer).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Reviewer not found")
+		return
+	}
+
+	// Check if already assigned
+	var existing int64
+	h.db.Model(&models.Review{}).Where("soumission_id = ? AND reviewer_id = ?", id, reviewerID).Count(&existing)
+	if existing > 0 {
+		utils.RespondError(c, http.StatusConflict, "Reviewer already assigned to this soumission")
+		return
+	}
+
+	review := models.Review{
+		SoumissionID: id,
+		ReviewerID:   reviewerID,
+		Status:       "assigned",
+	}
+
+	if err := h.db.Create(&review).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to assign reviewer")
+		return
+	}
+
+	// Update soumission status to "En révision"
+	if soumission.Statut == "En attente" {
+		h.db.Model(&soumission).Update("statut", "En révision")
+	}
+
+	// Notify reviewer
+	go createUserNotification(h.db, "review_assigned", reviewerID, &soumission,
+		"Vous avez été assigné comme reviewer pour la soumission \""+soumission.DocumentTitle+"\".",
+	)
+
+	utils.RespondSuccess(c, http.StatusCreated, review)
 }

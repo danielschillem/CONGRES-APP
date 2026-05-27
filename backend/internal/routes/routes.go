@@ -35,6 +35,14 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	webhookHandler := handlers.NewWebhookHandler(db, cfg, mailService)
 	congressHandler := handlers.NewCongressHandler(db, cfg)
 	actorHandler := handlers.NewActorHandler(db, cfg)
+	virtualHandler := handlers.NewVirtualHandler(db, cfg)
+	reviewerHandler := handlers.NewReviewerHandler(db, cfg)
+	programHandler := handlers.NewProgramHandler(db, cfg)
+	proceedingHandler := handlers.NewProceedingHandler(db, cfg)
+	reviewGridHandler := handlers.NewReviewGridHandler(db)
+	reviewerInvitationHandler := handlers.NewReviewerInvitationHandler(db, mailService, cfg)
+	broadcastHandler := handlers.NewBroadcastHandler(db, mailService, cfg)
+	thematicCoordinatorHandler := handlers.NewThematicCoordinatorHandler(db)
 
 	api := router.Group("/api")
 
@@ -54,6 +62,9 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 	// ─── Webhooks (public) ──────────────────────────────────────────────
 	api.POST("/webhooks/orange-money", webhookHandler.HandleOrangeMoneyNotification)
+
+	// ─── Reviewer invitation acceptance (public) ────────────────────────
+	api.POST("/reviewer/invitations/accept", reviewerInvitationHandler.AcceptInvitation)
 
 	// ─── Protected routes ──────────────────────────────────────────────
 	protected := api.Group("")
@@ -106,14 +117,11 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		super := protected.Group("/super")
 		super.Use(middleware.SuperAdminRequired())
 		{
-			// Congress CRUD
 			super.POST("/congresses", congressHandler.CreateCongress)
 			super.GET("/congresses", congressHandler.ListCongresses)
 			super.GET("/congresses/:id", congressHandler.GetCongress)
 			super.PATCH("/congresses/:id", congressHandler.UpdateCongress)
 			super.DELETE("/congresses/:id", congressHandler.DeleteCongress)
-
-			// Actors overview (all congresses)
 			super.GET("/actors", actorHandler.ListActorsForSuperAdmin)
 		}
 
@@ -121,22 +129,20 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		admin := protected.Group("/admin")
 		admin.Use(middleware.AdminRequired())
 		{
-			// Congress admin - my congress
 			admin.GET("/congress/current", congressHandler.GetCurrentCongress)
 			admin.PATCH("/congress/current", congressHandler.UpdateCurrentCongress)
-
-			// Actor management
 			admin.POST("/congress/actors", actorHandler.CreateActor)
 			admin.GET("/congress/actors", actorHandler.ListActors)
 			admin.DELETE("/congress/actors/:id", actorHandler.DeleteActor)
-
-			// Badge generation
 			admin.POST("/congress/badges", actorHandler.GenerateBadges)
-
-			// Attestations toggle
 			admin.POST("/congress/toggle-attestations", congressHandler.ToggleAttestations)
 
-			// Legacy admin routes (soumissions, inscriptions, users, stats)
+			// Reviewer assignment & reviews
+			admin.POST("/soumissions/:id/assign-reviewer", adminHandler.AssignReviewer)
+			admin.GET("/soumissions/:id/reviews", reviewerHandler.ListReviewsForSubmission)
+			admin.GET("/soumissions/:id/review-stats", reviewerHandler.GetReviewStats)
+
+			// Legacy admin routes
 			adminSoumissions := admin.Group("/soumissions")
 			{
 				adminSoumissions.GET("", adminHandler.ListSoumissions)
@@ -154,6 +160,106 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 			admin.GET("/stats", adminHandler.GetStats)
 			admin.GET("/users", adminHandler.ListUsers)
 			admin.PATCH("/users/:id/deactivate", adminHandler.DeactivateUser)
+
+			// Program slots
+			program := admin.Group("/program")
+			{
+				program.POST("/slots", programHandler.AdminCreateSlot)
+				program.GET("/slots", programHandler.AdminListSlots)
+				program.GET("/slots/:id", programHandler.AdminGetSlot)
+				program.PATCH("/slots/:id", programHandler.AdminUpdateSlot)
+				program.DELETE("/slots/:id", programHandler.AdminDeleteSlot)
+				program.GET("/available-soumissions", programHandler.ListAvailableSoumissions)
+				program.GET("/dates", programHandler.AdminListDates)
+			}
+
+			// Proceedings
+			proceedings := admin.Group("/proceedings")
+			{
+				proceedings.POST("", proceedingHandler.AdminCreateProceeding)
+				proceedings.GET("", proceedingHandler.AdminListProceedings)
+				proceedings.GET("/:id", proceedingHandler.AdminGetProceeding)
+				proceedings.PATCH("/:id", proceedingHandler.AdminUpdateProceeding)
+				proceedings.DELETE("/:id", proceedingHandler.AdminDeleteProceeding)
+				proceedings.POST("/:id/submissions", proceedingHandler.AdminAddSubmission)
+				proceedings.DELETE("/:id/submissions/:soumissionId", proceedingHandler.AdminRemoveSubmission)
+			}
+
+			// Virtual sessions
+			virtual := admin.Group("/virtual/sessions")
+			{
+				virtual.POST("", virtualHandler.AdminCreateSession)
+				virtual.GET("", virtualHandler.AdminListSessions)
+				virtual.GET("/:id", virtualHandler.AdminGetSession)
+				virtual.PATCH("/:id", virtualHandler.AdminUpdateSession)
+				virtual.DELETE("/:id", virtualHandler.AdminDeleteSession)
+				virtual.POST("/:id/start", virtualHandler.AdminStartSession)
+				virtual.POST("/:id/end", virtualHandler.AdminEndSession)
+				virtual.GET("/:id/attendance", virtualHandler.AdminGetAttendance)
+			}
+
+			// ─── Review Grids ──────────────────────────────────────────
+			admin.GET("/review-grids", reviewGridHandler.ListGrids)
+			admin.POST("/review-grids", reviewGridHandler.CreateGrid)
+			admin.PATCH("/review-grids/:id", reviewGridHandler.UpdateGrid)
+			admin.DELETE("/review-grids/:id", reviewGridHandler.DeleteGrid)
+			admin.GET("/review-grids/active", reviewGridHandler.GetActiveGrid)
+			admin.GET("/review-grids/:id/criteria", reviewGridHandler.ListCriteria)
+			admin.POST("/review-grids/:id/criteria", reviewGridHandler.CreateCriterion)
+			admin.PATCH("/review-grids/:id/criteria/:criterionId", reviewGridHandler.UpdateCriterion)
+			admin.DELETE("/review-grids/:id/criteria/:criterionId", reviewGridHandler.DeleteCriterion)
+
+			// ─── Reviewer Invitations ──────────────────────────────────
+			admin.GET("/reviewer-invitations", reviewerInvitationHandler.ListInvitations)
+			admin.POST("/reviewer-invitations", reviewerInvitationHandler.InviteReviewer)
+			admin.POST("/reviewer-invitations/batch", reviewerInvitationHandler.InviteReviewersBatch)
+			admin.POST("/reviewer-invitations/:id/resend", reviewerInvitationHandler.ResendInvitation)
+			admin.POST("/reviewer-invitations/:id/cancel", reviewerInvitationHandler.CancelInvitation)
+			admin.POST("/reviewer-invitations/send-reminders", reviewerInvitationHandler.SendReminders)
+			admin.GET("/reviewers/stats", reviewerInvitationHandler.ListReviewersWithStats)
+
+			// ─── Thematic Coordinators ─────────────────────────────────
+			admin.GET("/thematic-coordinators", thematicCoordinatorHandler.ListCoordinators)
+			admin.POST("/thematic-coordinators", thematicCoordinatorHandler.SetCoordinator)
+			admin.DELETE("/thematic-coordinators", thematicCoordinatorHandler.RemoveCoordinator)
+
+			// ─── Broadcast Messages ────────────────────────────────────
+			admin.GET("/broadcasts", broadcastHandler.ListBroadcasts)
+			admin.POST("/broadcasts", broadcastHandler.CreateBroadcast)
+			admin.POST("/broadcasts/create-and-send", broadcastHandler.CreateAndSendBroadcast)
+			admin.POST("/broadcasts/:id/send", broadcastHandler.SendBroadcast)
+			admin.GET("/broadcasts/:id", broadcastHandler.GetBroadcast)
+			admin.DELETE("/broadcasts/:id", broadcastHandler.DeleteBroadcast)
+			admin.GET("/broadcasts/stats", broadcastHandler.GetBroadcastStats)
+			admin.GET("/broadcasts/targets", broadcastHandler.GetAvailableTargets)
 		}
+
+		// Virtual sessions (user-facing)
+		virtualUser := protected.Group("/virtual")
+		{
+			virtualUser.GET("/sessions", virtualHandler.ListSessions)
+			virtualUser.GET("/sessions/:id", virtualHandler.GetSession)
+			virtualUser.POST("/sessions/:id/join", virtualHandler.JoinSession)
+			virtualUser.POST("/sessions/:id/leave", virtualHandler.LeaveSession)
+			virtualUser.GET("/my-sessions", virtualHandler.MyUpcomingSessions)
+		}
+
+		// Reviewer routes
+		reviewer := protected.Group("/reviewer")
+		reviewer.Use(middleware.ReviewerRequired())
+		{
+			reviewer.GET("/assignments", reviewerHandler.ListMyAssignments)
+			reviewer.POST("/assignments/:id/start", reviewerHandler.StartReview)
+			reviewer.POST("/assignments/:id/submit", reviewerHandler.SubmitReview)
+
+			// Reviewer can get active review grid
+			reviewer.GET("/review-grid/active", reviewGridHandler.GetActiveGrid)
+		}
+
+		// Public program routes (authenticated users)
+		protected.GET("/congresses/:congressId/program", programHandler.PublicListProgram)
+		protected.GET("/congresses/:congressId/program/dates", programHandler.PublicListDates)
+		protected.GET("/congresses/:congressId/proceedings", proceedingHandler.PublicListProceedings)
+		protected.GET("/proceedings/:id", proceedingHandler.PublicGetProceeding)
 	}
 }

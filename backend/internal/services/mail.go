@@ -178,3 +178,77 @@ func (s *MailService) SoumissionModifieeAdmin(to, prenom, nom, titre, auteur, ad
 <p style="color:#666;font-size:13px">Ceci est un message automatique.</p>`, prenom, nom, titre, auteur, adminURL)
 	return s.Send(to, "Soumission modifiée — Congrès Scientifique", s.layout(body))
 }
+
+func (s *MailService) ReviewerInvitation(to, prenom, nom, congressTitle, acceptURL, message string) error {
+	greeting := "Bonjour"
+	if prenom != "" && nom != "" {
+		greeting = fmt.Sprintf("Bonjour <strong>%s %s</strong>", prenom, nom)
+	}
+
+	msgBlock := ""
+	if message != "" {
+		msgBlock = fmt.Sprintf(`
+<div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin:16px 0;font-size:14px;color:#333">
+<p style="margin:0 0 8px;font-weight:600;color:#1a1a2e">Message du comité d'organisation</p>
+<p style="margin:0">%s</p>
+</div>`, message)
+	}
+
+	body := fmt.Sprintf(`
+<h2 style="color:#1a1a2e;margin:0 0 20px">Invitation à devenir relecteur</h2>
+<p>%s,</p>
+<p>Vous avez été invité(e) à participer au comité de relecture du congrès <strong>«&nbsp;%s&nbsp;»</strong>.</p>
+%s
+<p>En tant que relecteur, vous serez amené(e) à évaluer les soumissions scientifiques soumises au congrès selon une grille d'évaluation définie.</p>
+<p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#16a34a;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Accepter l'invitation</a></p>
+<p style="color:#666;font-size:13px">Ce lien est valable 14 jours. Si vous avez déjà un compte, vous serez automatiquement redirigé après connexion.</p>
+<p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, greeting, congressTitle, msgBlock, acceptURL)
+	return s.Send(to, "Invitation au comité de relecture — Congrès Scientifique", s.layout(body))
+}
+
+func (s *MailService) ReviewerWelcome(to, prenom, nom, tempPassword, loginURL string) error {
+	body := fmt.Sprintf(`
+<h2 style="color:#1a1a2e;margin:0 0 20px">Bienvenue dans l'équipe de relecture</h2>
+<p>Bonjour <strong>%s %s</strong>,</p>
+<p>Votre invitation a été acceptée avec succès. Un compte relecteur a été créé pour vous.</p>
+<div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin:20px 0;font-size:14px">
+<p style="margin:0 0 4px;font-weight:600;color:#1a1a2e">Vos identifiants de connexion</p>
+<p style="margin:0 0 4px">Email : <strong>%s</strong></p>
+<p style="margin:0">Mot de passe temporaire : <strong style="color:#dc2626">%s</strong></p>
+</div>
+<p style="color:#dc2626;font-size:13px">Veuillez changer votre mot de passe après votre première connexion.</p>
+<p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Se connecter</a></p>
+<p style="color:#666;font-size:13px">L'équipe d'organisation</p>`, prenom, nom, to, tempPassword, loginURL)
+	return s.Send(to, "Bienvenue — Relecteur Congrès Scientifique", s.layout(body))
+}
+
+func (s *MailService) ReviewReminder(to, name string, pendingCount int, dashboardURL string) error {
+	body := fmt.Sprintf(`
+<h2 style="color:#1a1a2e;margin:0 0 20px">Relance — Évaluations en attente</h2>
+<p>Bonjour <strong>%s</strong>,</p>
+<p>Vous avez actuellement <strong style="color:#dc2626">%d évaluation(s)</strong> en attente de votre part sur la plateforme de soumission.</p>
+<p>Nous vous remercions de bien vouloir finaliser vos évaluations dans les meilleurs délais afin de permettre la clôture du processus de relecture.</p>
+<p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Voir mes évaluations</a></p>
+<p style="color:#666;font-size:13px">Ceci est un message automatique de relance.</p>`, name, pendingCount, dashboardURL)
+	return s.Send(to, "Relance — Évaluations en attente", s.layout(body))
+}
+
+func (s *MailService) BroadcastMessage(to, prenom, nom, subject, bodyText, notificationsURL string) error {
+	greeting := "Bonjour"
+	if prenom != "" {
+		greeting = fmt.Sprintf("Bonjour <strong>%s</strong>", prenom)
+	}
+	if nom != "" && prenom != "" {
+		greeting = fmt.Sprintf("Bonjour <strong>%s %s</strong>", prenom, nom)
+	}
+
+	body := fmt.Sprintf(`
+<h2 style="color:#1a1a2e;margin:0 0 20px">%s</h2>
+<p>%s,</p>
+<div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:6px;padding:20px;margin:16px 0;font-size:14px;line-height:1.8;color:#333">
+%s
+</div>
+<p style="margin:24px 0"><a href="%s" style="display:inline-block;padding:12px 24px;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600">Voir mes notifications</a></p>
+<p style="color:#666;font-size:13px">Ceci est un message envoyé par le comité d'organisation.</p>`, subject, greeting, bodyText, notificationsURL)
+	return s.Send(to, subject, s.layout(body))
+}

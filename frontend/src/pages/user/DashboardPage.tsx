@@ -15,9 +15,10 @@ import {
   Clock,
   CalendarDays,
   MapPin,
+  Video,
 } from 'lucide-react'
-import { soumissionsApi, inscriptionsApi } from '@/lib/api'
-import { Soumission, SoumissionStats, Inscription } from '@/types'
+import { soumissionsApi, inscriptionsApi, virtualApi } from '@/lib/api'
+import { Soumission, SoumissionStats, Inscription, VirtualSession } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -219,9 +220,79 @@ function MyInscriptions() {
   )
 }
 
+function MyUpcomingVirtualSessions() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['my-upcoming-virtual-sessions'],
+    queryFn: async () => {
+      const res = await virtualApi.getMyUpcomingSessions()
+      return res.data.data as VirtualSession[]
+    },
+  })
+
+  const sessions: VirtualSession[] = data ?? []
+
+  if (isLoading) return null
+  if (sessions.length === 0) return null
+
+  return (
+    <Card className="border-l-4 border-l-violet-500">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Video className="h-4 w-4 text-violet-600" />
+            Sessions virtuelles à venir
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/congress/${sessions[0].congress_id}/virtual`}>
+              Voir tout
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {sessions.slice(0, 5).map((s) => (
+          <div key={s.id} className="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50 transition-colors">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-500 uppercase">
+                  {s.session_type}
+                </span>
+                {s.congress && (
+                  <span className="text-xs text-gray-400">• {s.congress.title}</span>
+                )}
+              </div>
+              <p className="font-medium text-sm text-gray-900 truncate">{s.title}</p>
+              <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+                <span className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  {formatDate(s.start_time)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {new Date(s.start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+            {s.status === 'live' ? (
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 shrink-0 ml-3" asChild>
+                <Link to={`/virtual/session/${s.id}`}>Rejoindre</Link>
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" className="shrink-0 ml-3" asChild>
+                <Link to={`/virtual/session/${s.id}`}>Détails</Link>
+              </Button>
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 function statutBadge(statut: Soumission['statut']) {
   const map = {
     'En attente': <Badge variant="warning">En attente</Badge>,
+    'En révision': <Badge className="bg-blue-100 text-blue-800">En révision</Badge>,
     'Approuvée': <Badge variant="success">Approuvée</Badge>,
     'Rejetée': <Badge variant="destructive">Rejetée</Badge>,
   }
@@ -291,6 +362,9 @@ export function DashboardPage() {
 
       {/* Inscriptions multi-congrès */}
       <MyInscriptions />
+
+      {/* Virtual sessions à venir */}
+      <MyUpcomingVirtualSessions />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -42,6 +43,7 @@ type CreateInscriptionRequest struct {
 	Telephone         string  `json:"telephone" binding:"required"`
 	Organisme         string  `json:"organisme"`
 	Pays              string  `json:"pays" binding:"required"`
+	TariffLabel       string  `json:"tariff_label" binding:"required"`
 	ParticipationType string  `json:"participation_type" binding:"required"`
 	Montant           float64 `json:"montant" binding:"required,gt=0"`
 	MethodePaiement   string  `json:"methode_paiement" binding:"required"`
@@ -79,6 +81,31 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 	if err := h.db.Where("id = ? AND status = ?", congressID, "active").First(&congress).Error; err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "Congress not found or not active")
 		return
+	}
+
+	// Check registration period
+	now := time.Now()
+	if congress.Config != nil {
+		config := map[string]interface{}{}
+		jsonBytes, _ := congress.Config.MarshalJSON()
+		if err := json.Unmarshal(jsonBytes, &config); err == nil {
+			if deadlines, ok := config["deadlines"].(map[string]interface{}); ok {
+				if regStartStr, ok := deadlines["registration_start"].(string); ok && regStartStr != "" {
+					regStart, err := time.Parse("2006-01-02", regStartStr[:10])
+					if err == nil && now.Before(regStart) {
+						utils.RespondError(c, http.StatusForbidden, "Registration period has not started yet")
+						return
+					}
+				}
+				if regEndStr, ok := deadlines["registration_end"].(string); ok && regEndStr != "" {
+					regEnd, err := time.Parse("2006-01-02", regEndStr[:10])
+					if err == nil && now.After(regEnd) {
+						utils.RespondError(c, http.StatusForbidden, "Registration period has ended")
+						return
+					}
+				}
+			}
+		}
 	}
 
 	userIDStr, _ := c.Get(middleware.ContextUserID)
@@ -122,6 +149,7 @@ func (h *InscriptionHandler) CreateInscription(c *gin.Context) {
 		Telephone:         req.Telephone,
 		Organisme:         req.Organisme,
 		Pays:              req.Pays,
+		TariffLabel:       req.TariffLabel,
 		ParticipationType: req.ParticipationType,
 		Montant:           req.Montant,
 		MethodePaiement:   req.MethodePaiement,

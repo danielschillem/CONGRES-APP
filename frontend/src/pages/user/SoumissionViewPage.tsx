@@ -19,6 +19,7 @@ import { formatDateTime } from '@/lib/utils'
 function statutBadge(statut: Soumission['statut']) {
   const map = {
     'En attente': <Badge variant="warning" className="text-sm px-3 py-1">En attente</Badge>,
+    'En révision': <Badge className="bg-blue-100 text-blue-800 text-sm px-3 py-1">En révision</Badge>,
     'Approuvée': <Badge variant="success" className="text-sm px-3 py-1">Approuvée</Badge>,
     'Rejetée': <Badge variant="destructive" className="text-sm px-3 py-1">Rejetée</Badge>,
   }

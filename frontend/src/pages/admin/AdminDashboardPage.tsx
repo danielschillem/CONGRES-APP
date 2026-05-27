@@ -214,6 +214,7 @@ function ModuleCard({
 function statutBadge(statut: Soumission['statut']) {
   const map = {
     'En attente': <Badge variant="warning">En attente</Badge>,
+    'En révision': <Badge className="bg-blue-100 text-blue-800">En révision</Badge>,
     Approuvée: <Badge variant="success">Approuvée</Badge>,
     Rejetée: <Badge variant="destructive">Rejetée</Badge>,
   }

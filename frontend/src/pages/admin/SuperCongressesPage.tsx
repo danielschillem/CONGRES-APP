@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  X,
 } from 'lucide-react'
 import { superApi } from '@/lib/api'
 import { Congress, CongressPayload, CongressStatus, CreateCongressResponse } from '@/types'
@@ -46,6 +47,11 @@ import {
 
 const PAGE_SIZE = 10
 
+type PricingRow = {
+  label: string
+  amount: string
+}
+
 type CongressFormState = {
   title: string
   subtitle: string
@@ -61,9 +67,7 @@ type CongressFormState = {
   secretariat: string
   themes: string
   submission_types: string
-  abstract_price: string
-  online_price: string
-  virtual_price: string
+  pricing_items: PricingRow[]
   submission_deadline: string
   inscription_deadline: string
   badge_color: string
@@ -84,9 +88,10 @@ const emptyForm: CongressFormState = {
   secretariat: '',
   themes: '',
   submission_types: 'Abstract, Poster, Communication',
-  abstract_price: '50000',
-  online_price: '25000',
-  virtual_price: '15000',
+  pricing_items: [
+    { label: 'Médecin généraliste', amount: '50000' },
+    { label: 'Médecin spécialiste', amount: '100000' },
+  ],
   submission_deadline: '',
   inscription_deadline: '',
   badge_color: '#4f46e5',
@@ -123,11 +128,12 @@ function formToPayload(form: CongressFormState): CongressPayload {
     config: {
       themes: csvToList(form.themes),
       submission_types: csvToList(form.submission_types),
-      pricing: {
-        presentiel: Number(form.abstract_price || 0),
-        en_ligne: Number(form.online_price || 0),
-        virtuel: Number(form.virtual_price || 0),
-      },
+      pricing: form.pricing_items
+        .filter((item) => item.label.trim() && item.amount)
+        .map((item) => ({
+          label: item.label.trim(),
+          amount: Number(item.amount),
+        })),
       deadlines: {
         submission: form.submission_deadline || null,
         inscription: form.inscription_deadline || null,
@@ -144,8 +150,22 @@ function congressToForm(congress: Congress): CongressFormState {
   const org = congress.organisational_structure ?? {}
   const config = congress.config ?? {}
   const badge = congress.badge_config ?? {}
-  const pricing = (config.pricing ?? {}) as Record<string, unknown>
+  const pricingRaw = (config.pricing ?? []) as unknown
   const deadlines = (config.deadlines ?? {}) as Record<string, unknown>
+
+  let pricing_items: PricingRow[]
+  if (Array.isArray(pricingRaw)) {
+    pricing_items = (pricingRaw as { label: string; amount: number }[]).map((p) => ({
+      label: p.label ?? '',
+      amount: String(p.amount ?? ''),
+    }))
+  } else {
+    const old = pricingRaw as { presentiel?: number; en_ligne?: number; virtuel?: number }
+    pricing_items = []
+    if (old.presentiel) pricing_items.push({ label: 'Présentiel', amount: String(old.presentiel) })
+    if (old.en_ligne) pricing_items.push({ label: 'En ligne', amount: String(old.en_ligne) })
+    if (old.virtuel) pricing_items.push({ label: 'Virtuel', amount: String(old.virtuel) })
+  }
 
   return {
     ...emptyForm,
@@ -165,9 +185,7 @@ function congressToForm(congress: Congress): CongressFormState {
     submission_types: Array.isArray(config.submission_types)
       ? config.submission_types.join(', ')
       : emptyForm.submission_types,
-    abstract_price: String(pricing.presentiel ?? emptyForm.abstract_price),
-    online_price: String(pricing.en_ligne ?? emptyForm.online_price),
-    virtual_price: String(pricing.virtuel ?? emptyForm.virtual_price),
+    pricing_items,
     submission_deadline: String(deadlines.submission ?? ''),
     inscription_deadline: String(deadlines.inscription ?? ''),
     badge_color: String(badge.primary_color ?? emptyForm.badge_color),
@@ -262,6 +280,28 @@ export function SuperCongressesPage() {
 
   const updateField = (field: keyof CongressFormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const updatePricingItem = (index: number, field: keyof PricingRow, value: string) => {
+    setForm((current) => {
+      const items = [...current.pricing_items]
+      items[index] = { ...items[index], [field]: value }
+      return { ...current, pricing_items: items }
+    })
+  }
+
+  const addPricingItem = () => {
+    setForm((current) => ({
+      ...current,
+      pricing_items: [...current.pricing_items, { label: '', amount: '' }],
+    }))
+  }
+
+  const removePricingItem = (index: number) => {
+    setForm((current) => ({
+      ...current,
+      pricing_items: current.pricing_items.filter((_, i) => i !== index),
+    }))
   }
 
   const copyCredentials = () => {
@@ -477,24 +517,63 @@ export function SuperCongressesPage() {
                 <Input value={form.submission_types} onChange={(event) => updateField('submission_types', event.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Tarif présentiel</Label>
-                <Input type="number" value={form.abstract_price} onChange={(event) => updateField('abstract_price', event.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tarif en ligne</Label>
-                <Input type="number" value={form.online_price} onChange={(event) => updateField('online_price', event.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tarif virtuel</Label>
-                <Input type="number" value={form.virtual_price} onChange={(event) => updateField('virtual_price', event.target.value)} />
-              </div>
-              <div className="space-y-1.5">
                 <Label>Couleur badge</Label>
                 <Input type="color" value={form.badge_color} onChange={(event) => updateField('badge_color', event.target.value)} />
               </div>
-              <div className="space-y-1.5">
-                <Label>Clôture soumissions</Label>
-                <Input type="date" value={form.submission_deadline} onChange={(event) => updateField('submission_deadline', event.target.value)} />
+
+              {/* Tarifs dynamiques */}
+              <div className="md:col-span-2 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Tarifs d'inscription</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addPricingItem}>
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Ajouter un libellé
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {form.pricing_items.map((item, index) => (
+                    <div key={index} className="grid gap-2 md:grid-cols-[1fr_180px_40px] md:items-end">
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs">Libellé</Label>
+                        <Input
+                          value={item.label}
+                          onChange={(e) => updatePricingItem(index, 'label', e.target.value)}
+                          placeholder="Ex: Médecin généraliste"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Prix du libellé</Label>
+                        <Input
+                          type="number"
+                          value={item.amount}
+                          onChange={(e) => updatePricingItem(index, 'amount', e.target.value)}
+                          placeholder="50000"
+                        />
+                      </div>
+                      <div className="hidden">
+                        <Label className="text-xs">Mode</Label>
+                        <Select value="presentiel" onValueChange={() => undefined}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="presentiel">Présentiel</SelectItem>
+                            <SelectItem value="en_ligne">En ligne</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 shrink-0"
+                        onClick={() => removePricingItem(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label>Clôture inscriptions</Label>
