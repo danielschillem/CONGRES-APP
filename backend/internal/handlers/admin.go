@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"congres-app/backend/internal/config"
+	"congres-app/backend/internal/middleware"
 	"congres-app/backend/internal/models"
 	"congres-app/backend/internal/services"
 	"congres-app/backend/pkg/utils"
@@ -27,6 +28,20 @@ type AdminHandler struct {
 
 func NewAdminHandler(db *gorm.DB, mail *services.MailService, cfg *config.Config) *AdminHandler {
 	return &AdminHandler{db: db, mail: mail, cfg: cfg}
+}
+
+// resolveCongressFilter returns the congress_id that should scope admin queries.
+// For congress_admin: forced from JWT (prevents cross-congress data access).
+// For super_admin: optional query param (can filter or see all).
+func resolveCongressFilter(c *gin.Context) string {
+	role, _ := c.Get(middleware.ContextRole)
+	if roleStr, ok := role.(string); ok && roleStr == "congress_admin" {
+		cid, _ := c.Get(middleware.ContextCongressID)
+		if s, ok := cid.(string); ok {
+			return s
+		}
+	}
+	return c.Query("congress_id")
 }
 
 type RejectRequest struct {
@@ -62,7 +77,11 @@ func (h *AdminHandler) ListSoumissions(c *gin.Context) {
 	}
 	offset := (page - 1) * limit
 
+	congressFilter := resolveCongressFilter(c)
 	query := h.db.Model(&models.Soumission{}).Preload("User")
+	if congressFilter != "" {
+		query = query.Joins("JOIN users ON users.id = soumissions.user_id").Where("users.congress_id = ?", congressFilter)
+	}
 
 	if search != "" {
 		if len(search) > 100 {
@@ -375,20 +394,35 @@ type StatsResponse struct {
 func (h *AdminHandler) GetStats(c *gin.Context) {
 	var stats StatsResponse
 
-	h.db.Model(&models.Soumission{}).Count(&stats.Total)
-	h.db.Model(&models.Soumission{}).Where("submission_type = ?", "Abstract").Count(&stats.TotalArticles)
-	h.db.Model(&models.Soumission{}).Where("submission_type = ?", "Poster").Count(&stats.TotalPosters)
-	h.db.Model(&models.Soumission{}).Where("submission_type = ?", "Communication").Count(&stats.TotalCommunications)
-	h.db.Model(&models.Soumission{}).Where("statut = ?", "En attente").Count(&stats.EnAttente)
-	h.db.Model(&models.Soumission{}).Where("statut = ?", "Approuvée").Count(&stats.Approuvees)
-	h.db.Model(&models.Soumission{}).Where("statut = ?", "Rejetée").Count(&stats.Rejetees)
+	congressFilter := resolveCongressFilter(c)
 
-	h.db.Model(&models.Inscription{}).Count(&stats.TotalInscriptions)
-	h.db.Model(&models.Inscription{}).Where("participation_type = ?", "Présentiel").Count(&stats.InscriptionsPresentiel)
-	h.db.Model(&models.Inscription{}).Where("participation_type = ?", "En ligne").Count(&stats.InscriptionsEnLigne)
-	h.db.Model(&models.Inscription{}).Where("participation_type = ?", "Virtuel").Count(&stats.InscriptionsVirtuel)
-	h.db.Model(&models.Inscription{}).Where("payment_status = ?", "confirmed").Count(&stats.InscriptionsConfirmees)
-	h.db.Model(&models.Inscription{}).Where("payment_status = ?", "pending").Count(&stats.InscriptionsEnAttente)
+	soumScope := func(db *gorm.DB) *gorm.DB {
+		if congressFilter != "" {
+			return db.Joins("JOIN users ON users.id = soumissions.user_id").Where("users.congress_id = ?", congressFilter)
+		}
+		return db
+	}
+	inscScope := func(db *gorm.DB) *gorm.DB {
+		if congressFilter != "" {
+			return db.Where("congress_id = ?", congressFilter)
+		}
+		return db
+	}
+
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Count(&stats.Total)
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Where("submission_type = ?", "Abstract").Count(&stats.TotalArticles)
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Where("submission_type = ?", "Poster").Count(&stats.TotalPosters)
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Where("submission_type = ?", "Communication").Count(&stats.TotalCommunications)
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Where("statut = ?", "En attente").Count(&stats.EnAttente)
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Where("statut = ?", "Approuvée").Count(&stats.Approuvees)
+	h.db.Model(&models.Soumission{}).Scopes(soumScope).Where("statut = ?", "Rejetée").Count(&stats.Rejetees)
+
+	h.db.Model(&models.Inscription{}).Scopes(inscScope).Count(&stats.TotalInscriptions)
+	h.db.Model(&models.Inscription{}).Scopes(inscScope).Where("participation_type = ?", "Présentiel").Count(&stats.InscriptionsPresentiel)
+	h.db.Model(&models.Inscription{}).Scopes(inscScope).Where("participation_type = ?", "En ligne").Count(&stats.InscriptionsEnLigne)
+	h.db.Model(&models.Inscription{}).Scopes(inscScope).Where("participation_type = ?", "Virtuel").Count(&stats.InscriptionsVirtuel)
+	h.db.Model(&models.Inscription{}).Scopes(inscScope).Where("payment_status = ?", "confirmed").Count(&stats.InscriptionsConfirmees)
+	h.db.Model(&models.Inscription{}).Scopes(inscScope).Where("payment_status = ?", "pending").Count(&stats.InscriptionsEnAttente)
 
 	utils.RespondSuccess(c, http.StatusOK, stats)
 }
@@ -411,7 +445,7 @@ func (h *AdminHandler) ListInscriptions(c *gin.Context) {
 	participationType := c.Query("participation_type")
 	pays := c.Query("pays")
 	paymentStatus := c.Query("payment_status")
-	congressID := c.Query("congress_id")
+	congressID := resolveCongressFilter(c)
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil || page < 1 {
@@ -470,7 +504,11 @@ func (h *AdminHandler) ExportSoumissionsCSV(c *gin.Context) {
 	submissionType := c.Query("type")
 	statut := c.Query("statut")
 
+	congressFilter := resolveCongressFilter(c)
 	query := h.db.Model(&models.Soumission{}).Preload("User").Order("created_at desc")
+	if congressFilter != "" {
+		query = query.Joins("JOIN users ON users.id = soumissions.user_id").Where("users.congress_id = ?", congressFilter)
+	}
 
 	if search != "" {
 		if len(search) > 100 {
@@ -550,7 +588,7 @@ func (h *AdminHandler) ExportInscriptionsCSV(c *gin.Context) {
 	participationType := c.Query("participation_type")
 	pays := c.Query("pays")
 	paymentStatus := c.Query("payment_status")
-	congressID := c.Query("congress_id")
+	congressID := resolveCongressFilter(c)
 
 	query := h.db.Model(&models.Inscription{}).Preload("Congress").Order("created_at desc")
 
@@ -676,7 +714,11 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 	}
 	offset := (page - 1) * limit
 
+	congressFilter := resolveCongressFilter(c)
 	query := h.db.Model(&models.User{}).Order("created_at desc")
+	if congressFilter != "" {
+		query = query.Where("congress_id = ?", congressFilter)
+	}
 
 	if search != "" {
 		if len(search) > 100 {

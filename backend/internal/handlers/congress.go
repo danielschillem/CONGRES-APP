@@ -198,15 +198,15 @@ func (h *CongressHandler) CreateCongress(c *gin.Context) {
 		SuperAdminID:            superAdminID,
 	}
 
-	if err := tx.Create(&congress).Error; err != nil {
-		tx.Rollback()
-		utils.RespondError(c, http.StatusInternalServerError, "Failed to create congress")
-		return
-	}
-
 	if err := tx.Create(&adminUser).Error; err != nil {
 		tx.Rollback()
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to create congress admin user")
+		return
+	}
+
+	if err := tx.Create(&congress).Error; err != nil {
+		tx.Rollback()
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to create congress")
 		return
 	}
 
