@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText,
@@ -225,7 +225,9 @@ function statutBadge(statut: Soumission['statut']) {
 
 export function AdminDashboardPage() {
   const queryClient = useQueryClient()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const isDashboard = location.pathname === '/admin/dashboard'
 
   const [search, setSearch] = useState(searchParams.get('search') ?? '')
   const [typeFilter, setTypeFilter] = useState(searchParams.get('type') ?? 'all')
@@ -252,6 +254,7 @@ export function AdminDashboardPage() {
       const response = await adminApi.getStats()
       return response.data.data
     },
+    enabled: isDashboard,
   })
 
   const deleteMutation = useMutation({
@@ -330,13 +333,17 @@ export function AdminDashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+      <div className="border-b border-ink-200 pb-4 dark:border-ink-800">
+        <h1 className="text-2xl font-semibold text-ink-950 dark:text-ink-50">
+          {isDashboard ? 'Tableau de bord' : (statutFilter !== 'all' ? `Soumissions - ${statutFilter}` : 'Toutes les soumissions')}
+        </h1>
         <p className="text-gray-500 text-sm mt-1">Vue d'ensemble du congrès</p>
       </div>
 
+      {isDashboard && (
+        <>
       {/* Modules de gestion */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <ModuleCard
@@ -501,8 +508,11 @@ export function AdminDashboardPage() {
         </Card>
       </div>
 
+        </>
+      )}
+
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 bg-white rounded-xl border border-gray-200 p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border border-ink-200 bg-white/80 p-4 shadow-sm dark:border-ink-800 dark:bg-ink-900/70">
         <div className="flex-1 min-w-[200px] space-y-1.5">
           <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
             Recherche
@@ -582,7 +592,7 @@ export function AdminDashboardPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-ink-200 bg-white shadow-sm dark:border-ink-800 dark:bg-ink-900">
         {isLoading ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
             <RefreshCw className="h-6 w-6 animate-spin mr-2" />

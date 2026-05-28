@@ -324,6 +324,8 @@ export const adminApi = {
     api.delete(`/admin/congress/actors/${id}`),
   generateBadgesCSV: () =>
     api.post('/admin/congress/badges', undefined, { responseType: 'blob' }),
+  toggleAttestations: () =>
+    api.post('/admin/congress/toggle-attestations'),
 }
 
 // Super admin endpoints

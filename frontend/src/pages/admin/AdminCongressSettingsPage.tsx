@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  CalendarDays, Plus, RefreshCw, Save, X, CreditCard,
+  Award, CalendarDays, Plus, RefreshCw, Save, X, CreditCard,
   Receipt, ListChecks,
 } from 'lucide-react'
 import { adminApi } from '@/lib/api'
@@ -232,6 +232,11 @@ export function AdminCongressSettingsPage() {
     },
   })
 
+  const toggleAttestationsMutation = useMutation({
+    mutationFn: () => adminApi.toggleAttestations(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-current-congress'] }),
+  })
+
   const updateField = (field: keyof SettingsForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
   }
@@ -352,6 +357,30 @@ export function AdminCongressSettingsPage() {
           Paramètres enregistrés.
         </div>
       )}
+
+      {/* Attestations toggle */}
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center gap-3">
+          <Award className={`h-5 w-5 ${data.attestations_available ? 'text-green-600' : 'text-gray-400'}`} />
+          <div>
+            <p className="text-sm font-medium text-gray-900">Attestations de participation</p>
+            <p className="text-xs text-gray-500">
+              {data.attestations_available
+                ? 'Les participants peuvent télécharger leur attestation.'
+                : 'Les attestations ne sont pas encore disponibles.'}
+            </p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant={data.attestations_available ? 'outline' : 'default'}
+          size="sm"
+          loading={toggleAttestationsMutation.isPending}
+          onClick={() => toggleAttestationsMutation.mutate()}
+        >
+          {data.attestations_available ? 'Désactiver' : 'Activer'}
+        </Button>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
