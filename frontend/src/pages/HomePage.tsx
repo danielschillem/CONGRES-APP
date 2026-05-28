@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, ChevronRight, Clock, MapPin, Microscope, Ticket, Users } from 'lucide-react'
+import { CalendarDays, ChevronRight, Clock, MapPin, Ticket } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { congressesApi } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
@@ -133,10 +133,10 @@ export function HomePage() {
       </header>
 
       <section className="hero-media text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
-          <div>
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+          <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary-100">Plateforme de congrès scientifique</p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-6xl">
+            <h1 className="mt-4 text-4xl font-semibold leading-tight sm:text-6xl">
               Piloter les inscriptions, soumissions et sessions scientifiques.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-cyan-50">
@@ -149,24 +149,6 @@ export function HomePage() {
               <Button size="lg" variant="outline" className="border-white/40 bg-white/10 text-white hover:bg-white/20" asChild>
                 <Link to="/login">Accéder à mon espace</Link>
               </Button>
-            </div>
-          </div>
-
-          <div className="grid content-end gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur">
-              <Users className="mb-3 h-5 w-5 text-primary-100" />
-              <p className="text-2xl font-semibold">{congresses.length}</p>
-              <p className="text-sm text-cyan-50">congrès actifs</p>
-            </div>
-            <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur">
-              <Microscope className="mb-3 h-5 w-5 text-primary-100" />
-              <p className="text-2xl font-semibold">Relecture</p>
-              <p className="text-sm text-cyan-50">flux scientifique structuré</p>
-            </div>
-            <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur">
-              <CalendarDays className="mb-3 h-5 w-5 text-primary-100" />
-              <p className="text-2xl font-semibold">Programme</p>
-              <p className="text-sm text-cyan-50">sessions et actes publics</p>
             </div>
           </div>
         </div>

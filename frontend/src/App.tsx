@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import type { AxiosResponse } from 'axios'
@@ -46,6 +46,7 @@ import { ReviewerDashboardPage } from '@/pages/reviewer/ReviewerDashboardPage'
 import { ReviewerInvitationAcceptPage } from '@/pages/reviewer/ReviewerInvitationAcceptPage'
 import { AdminProgramPage } from '@/pages/admin/AdminProgramPage'
 import { AdminProceedingsPage } from '@/pages/admin/AdminProceedingsPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import { User } from '@/types'
 
 const queryClient = new QueryClient({
@@ -167,8 +168,8 @@ function App() {
           <Route path="/congress/:id/program" element={<PublicProgramPage />} />
           <Route path="/congress/:id/proceedings" element={<PublicProceedingsPage />} />
 
-          {/* Default redirect */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

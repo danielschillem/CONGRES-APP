@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/Sidebar'
 import { Navbar } from '@/components/Navbar'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Tableau de bord',
@@ -33,6 +34,7 @@ const pageTitles: Record<string, string> = {
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
   const location = useLocation()
 
   const getTitle = () => {
@@ -48,13 +50,34 @@ export function Layout() {
     return 'Congrès scientifique'
   }
 
+  const title = getTitle()
+  usePageTitle(title)
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((current) => {
+      const next = !current
+      localStorage.setItem('sidebar-collapsed', String(next))
+      return next
+    })
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden bg-ink-50">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="flex h-screen overflow-hidden bg-ink-50 dark:bg-ink-950">
+      <Sidebar
+        open={sidebarOpen}
+        collapsed={sidebarCollapsed}
+        onClose={() => setSidebarOpen(false)}
+        onToggleCollapsed={toggleSidebarCollapsed}
+      />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} title={getTitle()} />
-        <main className="flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(8,145,178,0.08),transparent_34%),linear-gradient(180deg,#f8fafc,#f1f5f9)]">
+        <Navbar
+          onMenuClick={() => setSidebarOpen(true)}
+          onSidebarToggle={toggleSidebarCollapsed}
+          sidebarCollapsed={sidebarCollapsed}
+          title={title}
+        />
+        <main className="flex-1 overflow-y-auto bg-ink-50 dark:bg-ink-950">
           <div className="container mx-auto max-w-7xl px-4 py-6 lg:px-6">
             <Outlet />
           </div>

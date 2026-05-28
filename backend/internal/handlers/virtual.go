@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"congres-app/backend/internal/config"
@@ -329,15 +330,32 @@ func (h *VirtualHandler) ListSessions(c *gin.Context) {
 		return
 	}
 
-	var sessions []models.VirtualSession
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit < 1 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
 	now := time.Now()
-	if err := h.db.Where("congress_id = ? AND end_time > ?", congressID, now).
-		Order("start_time asc").Find(&sessions).Error; err != nil {
+	query := h.db.Model(&models.VirtualSession{}).Where("congress_id = ? AND end_time > ?", congressID, now)
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to count sessions")
+		return
+	}
+
+	var sessions []models.VirtualSession
+	if err := query.Order("start_time asc").Offset(offset).Limit(limit).Find(&sessions).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to fetch sessions")
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, sessions)
+	utils.RespondPaginated(c, sessions, total, page, limit)
 }
 
 func (h *VirtualHandler) GetSession(c *gin.Context) {

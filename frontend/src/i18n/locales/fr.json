@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Congrès Scientifique",
+    "tagline": "Pilotage scientifique"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "newSubmission": "Nouvelle soumission",
+    "registration": "Inscription",
+    "virtualSessions": "Sessions virtuelles",
+    "notifications": "Notifications",
+    "myProfile": "Mon profil",
+    "myCongress": "Mon congrès",
+    "actors": "Acteurs",
+    "congresses": "Congrès",
+    "allSubmissions": "Toutes les soumissions",
+    "pending": "En attente",
+    "approved": "Approuvées",
+    "rejected": "Rejetées",
+    "reviewers": "Relecteurs",
+    "reviewGrids": "Grilles d'évaluation",
+    "registrations": "Inscriptions",
+    "users": "Utilisateurs",
+    "finances": "Finances",
+    "program": "Programmation",
+    "proceedings": "Actes du congrès",
+    "broadcast": "Diffusion",
+    "badges": "Badges",
+    "attestations": "Attestations",
+    "account": "Compte",
+    "myEvaluations": "Mes évaluations",
+    "logout": "Déconnexion"
+  },
+  "sections": {
+    "overview": "Vue d'ensemble",
+    "submissionsEvaluation": "Soumissions & évaluation",
+    "participantsFinances": "Participants & finances",
+    "programContent": "Programme & contenu",
+    "documents": "Documents"
+  },
+  "roles": {
+    "administrator": "Administrateur",
+    "reviewer": "Relecteur"
+  },
+  "actions": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "lightMode": "Mode clair",
+    "darkMode": "Mode sombre",
+    "back": "Retour",
+    "home": "Accueil"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "code": "404"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "alreadyAccount": "Déjà un compte ?"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "globalSearch": "Recherche globale",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "download": "Télécharger",
+    "export": "Exporter",
+    "send": "Envoyer",
+    "submit": "Soumettre",
+    "page": "Page",
+    "of": "sur",
+    "results": "résultat",
+    "results_plural": "résultats",
+    "noResults": "Aucun résultat",
+    "required": "Requis",
+    "optional": "Optionnel",
+    "status": "Statut",
+    "date": "Date",
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone"
+  }
+}

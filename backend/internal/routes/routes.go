@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"net/http"
 	"time"
 
 	"congres-app/backend/internal/config"
@@ -18,6 +19,11 @@ func Setup(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	// Apply global middleware
 	router.Use(middleware.CORS(cfg.CORSOrigins))
 	router.Use(middleware.SecurityHeaders())
+
+	// Healthcheck
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
 
 	// Swagger documentation
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

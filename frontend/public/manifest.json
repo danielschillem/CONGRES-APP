@@ -1,0 +1,18 @@
+{
+  "name": "Congrès Scientifique",
+  "short_name": "CongrèsSci",
+  "description": "Plateforme de gestion de congrès scientifiques - soumissions, inscriptions, programme et actes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0891b2",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
