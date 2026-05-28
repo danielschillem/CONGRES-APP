@@ -1,64 +1,83 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
 
-    <!-- SEO -->
-    <title>Congrès Scientifique</title>
-    <meta name="description" content="Plateforme de gestion de congrès scientifiques - soumissions, inscriptions, programme et actes." />
-    <meta name="robots" content="index, follow" />
-    <meta name="keywords" content="congrès, scientifique, soumission, inscription, programme, actes" />
+        <!-- SEO -->
+        <title>Congrès Scientifique</title>
+        <meta
+            name="description"
+            content="Plateforme de gestion de congrès scientifiques - soumissions, inscriptions, programme et actes."
+        />
+        <meta name="robots" content="index, follow" />
+        <meta
+            name="keywords"
+            content="congrès, scientifique, soumission, inscription, programme, actes"
+        />
 
-    <!-- OpenGraph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Congrès Scientifique" />
-    <meta property="og:description" content="Plateforme de gestion de congrès scientifiques - soumissions, inscriptions, programme et actes." />
-    <meta property="og:locale" content="fr_FR" />
+        <!-- OpenGraph -->
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Congrès Scientifique" />
+        <meta
+            property="og:description"
+            content="Plateforme de gestion de congrès scientifiques - soumissions, inscriptions, programme et actes."
+        />
+        <meta property="og:locale" content="fr_FR" />
 
-    <!-- PWA -->
-    <meta name="theme-color" content="#0891b2" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="CongrèsSci" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/vite.svg" />
-    <link rel="service-worker" href="/sw.js" />
+        <!-- PWA -->
+        <!-- meta[name=theme-color] n'est pas supporté par Firefox, Opera, etc. -->
+        <meta name="theme-color" content="#0891b2" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="CongrèsSci" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/vite.svg" />
+        <link rel="service-worker" href="/sw.js" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
 
-    <!-- Theme bootstrap: light is the default, dark only when explicitly selected. -->
-    <script>
-      (function () {
-        var theme = localStorage.getItem('ui-theme')
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
-        }
-      })()
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').then(function (reg) {
-            console.log('SW registered:', reg.scope)
-          }).catch(function (err) {
-            console.log('SW registration failed:', err)
-          })
-        })
-      }
-    </script>
-  </body>
+        <!-- Theme bootstrap: light is the default, dark only when explicitly selected. -->
+        <script>
+            (function () {
+                var theme = localStorage.getItem("ui-theme");
+                if (theme === "dark") {
+                    document.documentElement.classList.add("dark");
+                } else {
+                    document.documentElement.classList.remove("dark");
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+        <script>
+            if ("serviceWorker" in navigator) {
+                window.addEventListener("load", function () {
+                    navigator.serviceWorker
+                        .register("/sw.js")
+                        .then(function (reg) {
+                            console.log("SW registered:", reg.scope);
+                        })
+                        .catch(function (err) {
+                            console.log("SW registration failed:", err);
+                        });
+                });
+            }
+        </script>
+    </body>
 </html>
