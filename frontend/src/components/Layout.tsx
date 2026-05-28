@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Sidebar } from '@/components/Sidebar'
 import { Navbar } from '@/components/Navbar'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -79,7 +80,9 @@ export function Layout() {
         />
         <main className="flex-1 overflow-y-auto bg-ink-50 dark:bg-ink-950">
           <div className="container mx-auto max-w-7xl px-4 py-6 lg:px-6">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>

@@ -1,12 +1,14 @@
 {
-  "name": "Congrès Scientifique",
-  "short_name": "CongrèsSci",
-  "description": "Plateforme de gestion de congrès scientifiques - soumissions, inscriptions, programme et actes",
+  "name": "Congres Scientifique",
+  "short_name": "CongresSci",
+  "description": "Plateforme de gestion de congres scientifiques - soumissions, inscriptions, programme et actes",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#0891b2",
   "lang": "fr",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "events"],
   "icons": [
     {
       "src": "/vite.svg",
@@ -14,5 +16,6 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "splash_pages": null
 }

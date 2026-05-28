@@ -123,3 +123,29 @@ func RefreshTokenColumns() []string {
 func NotificationColumns() []string {
 	return []string{"id", "type", "notifiable_id", "notifiable_type", "data", "read_at", "created_at", "updated_at"}
 }
+
+// InscriptionColumns returns the ordered column list for inscriptions.
+func InscriptionColumns() []string {
+	return []string{
+		"id", "user_id", "congress_id", "nom", "prenom", "email",
+		"telephone", "organisme", "pays", "tariff_label", "participation_type",
+		"montant", "methode_paiement", "numero_facture", "transaction_id",
+		"payment_status", "created_at", "updated_at",
+	}
+}
+
+// CongressColumns returns the ordered column list for congresses.
+func CongressColumns() []string {
+	return []string{
+		"id", "title", "subtitle", "description", "edition",
+		"start_date", "end_date", "location", "city", "country",
+		"organisational_structure", "config", "badge_config",
+		"admin_id", "attestations_available", "status",
+		"super_admin_id", "created_at", "updated_at",
+	}
+}
+
+// ReviewColumns returns the ordered column list for reviews.
+func ReviewColumns() []string {
+	return []string{"id", "soumission_id", "reviewer_id", "review_grid_id", "scores", "overall_score", "comment", "status", "created_at", "updated_at"}
+}

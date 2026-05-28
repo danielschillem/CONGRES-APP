@@ -18,6 +18,27 @@
   }
 }
 
+/* Smooth dark mode transition */
+html {
+  transition: color-scheme 0.3s ease;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html:not(.dark) {
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
 @layer utilities {
   .app-surface {
     @apply rounded-lg border border-ink-200 bg-white shadow-sm;

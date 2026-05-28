@@ -11,7 +11,9 @@
 package main
 
 import (
+	"crypto/rand"
 	"log"
+	"math/big"
 	"os"
 	"strings"
 
@@ -19,10 +21,10 @@ import (
 	"congres-app/backend/internal/database"
 	"congres-app/backend/internal/models"
 	"congres-app/backend/internal/routes"
-	"congres-app/backend/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -33,8 +35,8 @@ func main() {
 	// Connect to database
 	db := database.Connect(cfg)
 
-	// Run migrations
-	database.AutoMigrate(db)
+	// Run migrations (versioned via golang-migrate, falls back to GORM AutoMigrate)
+	database.RunMigrations(cfg, db)
 
 	// Ensure upload directory exists
 	if err := os.MkdirAll(cfg.UploadPath, 0700); err != nil {
@@ -79,20 +81,25 @@ func main() {
 }
 
 // seedAdmin creates the default admin user if one does not already exist.
-// The admin password is read from the ADMIN_PASSWORD env var (default: "password123").
+// If ADMIN_PASSWORD env var is set, it uses that; otherwise generates a random password.
 func seedAdmin(db *gorm.DB, cfg *config.Config) {
 	const adminEmail = "admin@gestion.bf"
+
 	adminPassword := os.Getenv("ADMIN_PASSWORD")
 	if adminPassword == "" {
-		adminPassword = "password123"
-		log.Println("Warning: using default admin password, set ADMIN_PASSWORD env var")
+		pwd, err := generateRandomPassword(16)
+		if err != nil {
+			log.Fatalf("Failed to generate admin password: %v", err)
+		}
+		adminPassword = pwd
+		log.Printf("Admin password generated (set ADMIN_PASSWORD env var to override): %s", adminPassword)
 	}
 
-	hashedPassword, err := utils.HashPassword(adminPassword)
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("Warning: failed to hash admin password: %v", err)
-		return
+		log.Fatalf("Failed to hash admin password: %v", err)
 	}
+	hashedPassword := string(hashedBytes)
 
 	var existing models.User
 	err = db.Where("email = ?", adminEmail).First(&existing).Error
@@ -132,4 +139,18 @@ func seedAdmin(db *gorm.DB, cfg *config.Config) {
 	}
 
 	log.Printf("Admin user created: %s", adminEmail)
+}
+
+// generateRandomPassword creates a random alphanumeric password of given length.
+func generateRandomPassword(length int) (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%"
+	result := make([]byte, length)
+	for i := range result {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		result[i] = charset[n.Int64()]
+	}
+	return string(result), nil
 }

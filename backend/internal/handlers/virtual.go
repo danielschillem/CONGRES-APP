@@ -146,18 +146,34 @@ func (h *VirtualHandler) AdminListSessions(c *gin.Context) {
 		congressID, _ = uuid.Parse(congressIDStr.(string))
 	}
 
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit < 1 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
 	query := h.db.Model(&models.VirtualSession{}).Order("start_time asc")
 	if congressID != uuid.Nil {
 		query = query.Where("congress_id = ?", congressID)
 	}
 
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to count sessions")
+		return
+	}
+
 	var sessions []models.VirtualSession
-	if err := query.Find(&sessions).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Find(&sessions).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to fetch sessions")
 		return
 	}
 
-	utils.RespondSuccess(c, http.StatusOK, sessions)
+	utils.RespondPaginated(c, sessions, total, page, limit)
 }
 
 func (h *VirtualHandler) AdminGetSession(c *gin.Context) {

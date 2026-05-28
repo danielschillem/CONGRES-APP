@@ -75,7 +75,7 @@ func (h *WebhookHandler) HandleOrangeMoneyNotification(c *gin.Context) {
 		utils.RespondError(c, http.StatusUnauthorized, "Missing X-Signature header")
 		return
 	}
-	sig := computeHMACSHA256(string(cleanBody), h.cfg.OrangeMoneyWebhookSecret)
+	sig := ComputeHMACSHA256(string(cleanBody), h.cfg.OrangeMoneyWebhookSecret)
 	if !hmac.Equal([]byte(sig), []byte(headerSig)) {
 		log.Printf("[Webhook] Invalid signature for OrderID=%s", payload.OrderID)
 		utils.RespondError(c, http.StatusUnauthorized, "Invalid signature")
@@ -129,7 +129,7 @@ func (h *WebhookHandler) HandleOrangeMoneyNotification(c *gin.Context) {
 	utils.RespondSuccess(c, http.StatusOK, gin.H{"status": "ok"})
 }
 
-func computeHMACSHA256(data, secret string) string {
+func ComputeHMACSHA256(data, secret string) string {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(data))
 	return hex.EncodeToString(mac.Sum(nil))

@@ -7,18 +7,32 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'providers/auth_provider.dart';
 import 'providers/soumission_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/congress_provider.dart';
+import 'providers/inscription_provider.dart';
+import 'providers/virtual_session_provider.dart';
+import 'providers/review_provider.dart';
+import 'services/push_notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/soumissions/soumission_form_screen.dart';
 import 'screens/soumissions/soumission_detail_screen.dart';
+import 'screens/congress/congress_list_screen.dart';
+import 'screens/congress/congress_detail_screen.dart';
+import 'screens/inscription/inscription_form_screen.dart';
+import 'screens/inscription/inscription_list_screen.dart';
+import 'screens/virtual/virtual_sessions_screen.dart';
+import 'screens/review/review_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize French date formatting
   await initializeDateFormatting('fr_FR', null);
+
+  // Initialize push notifications
+  await PushNotificationService.initialize();
 
   // Set preferred orientation
   await SystemChrome.setPreferredOrientations([
@@ -49,6 +63,10 @@ class CongressApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SoumissionProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => CongressProvider()),
+        ChangeNotifierProvider(create: (_) => InscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => VirtualSessionProvider()),
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
       ],
       child: _AppRouter(),
     );
@@ -112,13 +130,50 @@ class _AppRouterState extends State<_AppRouter> {
           path: '/soumissions/:id/edit',
           builder: (context, state) {
             final id = state.pathParameters['id']!;
-            // Find the soumission from the provider
             final soumissionProvider = context.read<SoumissionProvider>();
             final soumissions = soumissionProvider.soumissions
                 .where((s) => s.id == id);
             final soumission = soumissions.isNotEmpty ? soumissions.first : null;
             return SoumissionFormScreen(soumission: soumission);
           },
+        ),
+
+        // Congress routes
+        GoRoute(
+          path: '/congress',
+          builder: (context, state) => const CongressListScreen(),
+        ),
+        GoRoute(
+          path: '/congress/detail',
+          builder: (context, state) {
+            final id = state.extra as String;
+            return CongressDetailScreen(congressId: id);
+          },
+        ),
+
+        // Inscription routes
+        GoRoute(
+          path: '/inscription',
+          builder: (context, state) {
+            final congressId = state.extra as String?;
+            return InscriptionFormScreen(congressId: congressId);
+          },
+        ),
+        GoRoute(
+          path: '/inscriptions',
+          builder: (context, state) => const InscriptionListScreen(),
+        ),
+
+        // Virtual session routes
+        GoRoute(
+          path: '/virtual/sessions',
+          builder: (context, state) => const VirtualSessionsScreen(),
+        ),
+
+        // Review routes
+        GoRoute(
+          path: '/reviewer/assignments',
+          builder: (context, state) => const ReviewListScreen(),
         ),
       ],
       errorBuilder: (context, state) => Scaffold(
@@ -135,7 +190,7 @@ class _AppRouterState extends State<_AppRouter> {
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () => context.go('/splash'),
-                child: const Text('Retour à l\'accueil'),
+                child: const Text("Retour a l'accueil"),
               ),
             ],
           ),
@@ -147,7 +202,7 @@ class _AppRouterState extends State<_AppRouter> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'CongrèsApp',
+      title: 'CongresApp',
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
 
@@ -197,8 +252,7 @@ class _AppRouterState extends State<_AppRouter> {
             foregroundColor: Colors.white,
             elevation: 2,
             shadowColor: const Color(0xFF3B82F6).withValues(alpha: 0.3),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -214,8 +268,7 @@ class _AppRouterState extends State<_AppRouter> {
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF3B82F6),
             side: const BorderSide(color: Color(0xFF3B82F6)),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

@@ -111,6 +111,11 @@ api.interceptors.response.use(
       }
     }
 
+    if (!error.response) {
+      console.error('[API] Network error:', error.message)
+    } else if (error.response.status >= 500) {
+      console.error('[API] Server error:', error.response.status, error.config?.url)
+    }
     return Promise.reject(error)
   }
 )

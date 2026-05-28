@@ -200,10 +200,8 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 
 	// Generate unique filename
 	ext := filepath.Ext(file.Filename)
-	uniqueFilename := fmt.Sprintf("%s_%s%s", uuid.New().String(), sanitizeFilename(file.Filename), ext)
-	// Avoid double extension
 	baseName := strings.TrimSuffix(file.Filename, ext)
-	uniqueFilename = fmt.Sprintf("%s_%s%s", uuid.New().String(), sanitizeFilename(baseName), ext)
+	uniqueFilename := fmt.Sprintf("%s_%s%s", uuid.New().String(), sanitizeFilename(baseName), ext)
 	filePath := filepath.Join(uploadPath, uniqueFilename)
 
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -261,7 +259,7 @@ func (h *SoumissionHandler) CreateSoumission(c *gin.Context) {
 			}
 		}()
 		var admins []models.User
-		if err := h.db.Where("role = ?", "admin").Find(&admins).Error; err == nil {
+		if err := h.db.Where("role IN ?", []string{"super_admin", "congress_admin"}).Find(&admins).Error; err == nil {
 			for _, admin := range admins {
 				if admin.Email != "" {
 					h.mail.NouvelleSoumissionAdmin(
@@ -470,7 +468,7 @@ func (h *SoumissionHandler) UpdateSoumission(c *gin.Context) {
 			}
 		}()
 		var admins []models.User
-		if err := h.db.Where("role = ?", "admin").Find(&admins).Error; err == nil {
+		if err := h.db.Where("role IN ?", []string{"super_admin", "congress_admin"}).Find(&admins).Error; err == nil {
 			for _, admin := range admins {
 				if admin.Email != "" {
 					h.mail.SoumissionModifieeAdmin(
